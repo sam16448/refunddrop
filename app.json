@@ -18,14 +18,24 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.sam16448.refunddrop"
+      "package": "com.sam16448.refunddrop",
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "scheme": "refunddrop",
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "RefundDrop uses the camera to scan the barcode on your boarding pass.",
+          "recordAudioAndroid": false
+        }
+      ]
     ]
   }
 }

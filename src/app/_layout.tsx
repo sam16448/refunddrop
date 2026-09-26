@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ClaimProvider } from '@/state/claim';
 import { ClaimsProvider } from '@/state/claims';
+import { EntitlementsProvider } from '@/state/entitlements';
 import { C } from '@/theme';
 
 const theme = {
@@ -14,6 +15,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider value={theme}>
+        <EntitlementsProvider>
         <ClaimsProvider>
         <ClaimProvider>
           <StatusBar style="light" />
@@ -26,6 +28,7 @@ export default function RootLayout() {
           />
         </ClaimProvider>
         </ClaimsProvider>
+        </EntitlementsProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

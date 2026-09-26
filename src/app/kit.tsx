@@ -8,6 +8,7 @@ import { answersFor, effectiveFacts } from '@/lib/claim';
 import { evaluate, formatMoney } from '@/rules';
 import { useClaim } from '@/state/claim';
 import { useClaims } from '@/state/claims';
+import { flightKey, useEntitlements } from '@/state/entitlements';
 import { C, R, S, T } from '@/theme';
 
 function Field({
@@ -45,6 +46,7 @@ function Field({
 export default function KitScreen() {
   const { facts, answers, experience } = useClaim();
   const { add } = useClaims();
+  const ent = useEntitlements();
   const [name, setName] = useState('');
   const [others, setOthers] = useState('');
   const [bookingRef, setBookingRef] = useState('');
@@ -55,6 +57,7 @@ export default function KitScreen() {
   const verdict = effFacts ? evaluate(effFacts, effAnswers) : undefined;
 
   if (!facts || !effFacts || !verdict) return <Redirect href="/" />;
+  if (!ent.isUnlocked(flightKey(facts))) return <Redirect href="/paywall" />;
 
   const details: ClaimDetails = {
     passengerName: name,
@@ -82,6 +85,7 @@ export default function KitScreen() {
   return (
     <Screen footer={<Button title="Save to my claims" icon="bookmark" onPress={save} disabled={!name.trim()} />}>
       <BackBar onBack={() => router.back()} title="Your Claim Kit" />
+      {ent.demo ? <Text style={styles.demo}>Demo mode: no RevenueCat key configured, so the kit is unlocked.</Text> : null}
       <Text style={styles.title}>{total ? `Claim ${total}` : 'Request your refund'}</Text>
       <Text style={styles.sub}>
         Your letter cites the exact rules that apply. Send it through {verdict.claimAgainst.name}’s official claim form or
@@ -115,6 +119,7 @@ export default function KitScreen() {
 
 const styles = StyleSheet.create({
   title: { ...T.h1, color: C.accent },
+  demo: { color: C.info, fontSize: 12, marginBottom: S.sm },
   sub: { ...T.body, color: C.muted, marginTop: S.xs },
   label: { ...T.label, color: C.muted, fontSize: 11, marginBottom: 6 },
   input: {

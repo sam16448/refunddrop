@@ -7,6 +7,7 @@ import { BackBar, Button, Card, Pill, Screen, SectionLabel } from '@/components/
 import { answersFor, effectiveFacts } from '@/lib/claim';
 import { evaluate, formatDuration, formatMoney, type Outcome, type StepStatus } from '@/rules';
 import { useClaim } from '@/state/claim';
+import { flightKey, useEntitlements } from '@/state/entitlements';
 import { C, R, S, T } from '@/theme';
 
 const OUTCOME_STYLE: Record<Outcome, { color: string; label: string; icon: keyof typeof Ionicons.glyphMap }> = {
@@ -43,6 +44,7 @@ function useCountUp(target: number): number {
 
 export default function VerdictScreen() {
   const { facts, answers, experience, reset } = useClaim();
+  const { isUnlocked } = useEntitlements();
   const verdict = useMemo(
     () => (facts ? evaluate(effectiveFacts(facts, experience), answersFor(experience, answers)) : undefined),
     [facts, answers, experience],
@@ -66,7 +68,7 @@ export default function VerdictScreen() {
     <Button
       title="Get my Claim Kit"
       icon="document-text"
-      onPress={() => router.push('/kit')}
+      onPress={() => router.push(isUnlocked(flightKey(facts)) ? '/kit' : '/paywall')}
     />
   ) : (
     <Button
