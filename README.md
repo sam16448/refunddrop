@@ -10,6 +10,14 @@ Scan your boarding pass. RefundDrop pulls your flight's real arrival time, appli
 
 > Built for the RevenueCat **Shipaton 2026 Next Gen Award**.
 
+<p align="center">
+  <img src="docs/screenshots/01_check.png" width="19%" alt="Check tab"/>
+  <img src="docs/screenshots/05_verdict.png" width="19%" alt="Verdict"/>
+  <img src="docs/screenshots/06_paywall.png" width="19%" alt="RevenueCat paywall"/>
+  <img src="docs/screenshots/07_claims.png" width="19%" alt="Claims wallet"/>
+  <img src="docs/screenshots/09_rights.png" width="19%" alt="Rights guide"/>
+</p>
+
 ## Why it exists
 
 Airlines owe passengers €250–€600 for long delays, short-notice cancellations and overbooking on European flights, yet most eligible passengers never claim. The ones who do usually go through claim companies that keep around a third of the money. The eligibility check itself is simple once the rules are encoded — so RefundDrop gives the check away and charges a small, flat fee for the part that actually saves people money: a claim that cites the right rules and a process that doesn't give up after one email.
