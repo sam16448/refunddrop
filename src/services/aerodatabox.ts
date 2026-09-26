@@ -112,10 +112,15 @@ export function normalizeAdbFlight(f: AdbFlight, date: string): FlightFacts | un
  * operating flight, and the marketing numbers are kept on it.
  */
 export function normalizeAdbResponse(body: unknown, date: string): FlightFacts[] {
-  const list: AdbFlight[] = Array.isArray(body) ? body : [];
+  const all: AdbFlight[] = Array.isArray(body) ? body : [];
+  // AeroDataBox returns flights that depart OR arrive on the local date, so an
+  // overnight flight from the previous day shows up too. Keep only departures
+  // on the requested local date, unless that leaves nothing.
+  const departingThatDay = all.filter((f) => f.departure?.scheduledTime?.local?.startsWith(date));
+  const list = departingThatDay.length > 0 ? departingThatDay : all;
   const operators = list.filter((f) => f.codeshareStatus !== 'IsCodeshared');
   const source = operators.length > 0 ? operators : list;
-  const marketed = list
+  const marketed = all
     .filter((f) => f.codeshareStatus === 'IsCodeshared' && f.number)
     .map((f) => f.number!.trim());
   return source

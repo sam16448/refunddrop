@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { evaluate } from '../src/rules';
 import { adbUtcToIso, normalizeAdbResponse } from '../src/services/aerodatabox';
+import realResponse from './fixtures/aerodatabox-lh756-2026-07-20.json';
 
 /** Shape follows AeroDataBox "flight status by number and date"; values are made up. */
 const arrived = [
@@ -82,5 +83,18 @@ describe('AeroDataBox normalizer', () => {
   it('ignores empty or malformed responses', () => {
     expect(normalizeAdbResponse(null, '2026-07-20')).toEqual([]);
     expect(normalizeAdbResponse([{ number: 'XX 1' }], '2026-07-20')).toEqual([]);
+  });
+
+  it('handles a real AeroDataBox response (LH 756, 20 Jul 2026)', () => {
+    const flights = normalizeAdbResponse(realResponse, '2026-07-20');
+    // The previous day's overnight flight (arriving 20 Jul local) is filtered out.
+    expect(flights).toHaveLength(1);
+    const [f] = flights;
+    expect(f.scheduledDepartureUtc).toBe('2026-07-20T11:00:00.000Z');
+    expect(f.origin).toMatchObject({ iata: 'FRA', country: 'DE', tz: 'Europe/Berlin' });
+    expect(f.destination).toMatchObject({ iata: 'BOM', city: 'Mumbai' });
+    expect(f.actualArrivalUtc).toBe('2026-07-20T19:20:00.000Z');
+    const v = evaluate(f, { wasOnFlight: true });
+    expect(v.outcome).toBe('not_eligible'); // landed 10 minutes early
   });
 });

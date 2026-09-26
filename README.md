@@ -97,7 +97,7 @@ src/services/       Flight lookup, AeroDataBox normalizer, boarding-pass parser,
 src/state/          Flow state, claim tracker, entitlements
 src/data/           Sample flights and sample boarding pass
 worker/             Cloudflare Worker proxy
-tests/              Vitest suite (74 tests)
+tests/              Vitest suite (75 tests)
 docs/               Sample boarding pass for demos
 ```
 
@@ -109,7 +109,7 @@ You need [Node.js LTS](https://nodejs.org) and [Git](https://git-scm.com).
 git clone https://github.com/sam16448/refunddrop.git
 cd refunddrop
 npm install
-npm test            # 74 tests: rules engine, letters, boarding passes, API normalizer
+npm test            # 75 tests: rules engine, letters, boarding passes, API normalizer
 npx expo start      # opens in Expo Go (purchases run in RevenueCat preview mode)
 ```
 

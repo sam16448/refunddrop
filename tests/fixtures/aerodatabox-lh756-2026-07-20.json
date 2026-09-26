@@ -1,0 +1,179 @@
+[
+  {
+    "greatCircleDistance": {
+      "meter": 6576972.94,
+      "km": 6576.97,
+      "mile": 4086.74,
+      "nm": 3551.28,
+      "feet": 21577995.21
+    },
+    "departure": {
+      "airport": {
+        "icao": "EDDF",
+        "iata": "FRA",
+        "name": "Frankfurt-am-Main",
+        "shortName": "Frankfurt-am-Main",
+        "municipalityName": "Frankfurt-am-Main",
+        "location": {
+          "lat": 50.0264,
+          "lon": 8.543129
+        },
+        "countryCode": "DE",
+        "timeZone": "Europe/Berlin"
+      },
+      "scheduledTime": {
+        "utc": "2026-07-19 11:00Z",
+        "local": "2026-07-19 13:00+02:00"
+      },
+      "revisedTime": {
+        "utc": "2026-07-19 11:00Z",
+        "local": "2026-07-19 13:00+02:00"
+      },
+      "runwayTime": {
+        "utc": "2026-07-19 11:30Z",
+        "local": "2026-07-19 13:30+02:00"
+      },
+      "terminal": "1",
+      "checkInDesk": "259-335",
+      "gate": "Z50",
+      "runway": "18",
+      "quality": [
+        "Basic",
+        "Live"
+      ]
+    },
+    "arrival": {
+      "airport": {
+        "icao": "VABB",
+        "iata": "BOM",
+        "name": "Mumbai Chhatrapati Shivaji",
+        "shortName": "Chhatrapati Shivaji",
+        "municipalityName": "Mumbai",
+        "location": {
+          "lat": 19.0887,
+          "lon": 72.8679
+        },
+        "countryCode": "IN",
+        "timeZone": "Asia/Kolkata"
+      },
+      "scheduledTime": {
+        "utc": "2026-07-19 19:30Z",
+        "local": "2026-07-20 01:00+05:30"
+      },
+      "revisedTime": {
+        "utc": "2026-07-19 19:36Z",
+        "local": "2026-07-20 01:06+05:30"
+      },
+      "terminal": "2",
+      "baggageBelt": "5",
+      "quality": [
+        "Basic",
+        "Live"
+      ]
+    },
+    "lastUpdatedUtc": "2026-07-19 21:34Z",
+    "number": "LH 756",
+    "callSign": "DLH756",
+    "status": "Arrived",
+    "codeshareStatus": "IsOperator",
+    "isCargo": false,
+    "aircraft": {
+      "reg": "D-AIFE",
+      "modeS": "3C64C5",
+      "model": "Airbus A340"
+    },
+    "airline": {
+      "name": "Lufthansa",
+      "iata": "LH",
+      "icao": "DLH"
+    }
+  },
+  {
+    "greatCircleDistance": {
+      "meter": 6576972.94,
+      "km": 6576.97,
+      "mile": 4086.74,
+      "nm": 3551.28,
+      "feet": 21577995.21
+    },
+    "departure": {
+      "airport": {
+        "icao": "EDDF",
+        "iata": "FRA",
+        "name": "Frankfurt-am-Main",
+        "shortName": "Frankfurt-am-Main",
+        "municipalityName": "Frankfurt-am-Main",
+        "location": {
+          "lat": 50.0264,
+          "lon": 8.543129
+        },
+        "countryCode": "DE",
+        "timeZone": "Europe/Berlin"
+      },
+      "scheduledTime": {
+        "utc": "2026-07-20 11:00Z",
+        "local": "2026-07-20 13:00+02:00"
+      },
+      "revisedTime": {
+        "utc": "2026-07-20 11:00Z",
+        "local": "2026-07-20 13:00+02:00"
+      },
+      "runwayTime": {
+        "utc": "2026-07-20 11:18Z",
+        "local": "2026-07-20 13:18+02:00"
+      },
+      "terminal": "1",
+      "checkInDesk": "259-335",
+      "gate": "Z54",
+      "quality": [
+        "Basic",
+        "Live"
+      ]
+    },
+    "arrival": {
+      "airport": {
+        "icao": "VABB",
+        "iata": "BOM",
+        "name": "Mumbai Chhatrapati Shivaji",
+        "shortName": "Chhatrapati Shivaji",
+        "municipalityName": "Mumbai",
+        "location": {
+          "lat": 19.0887,
+          "lon": 72.8679
+        },
+        "countryCode": "IN",
+        "timeZone": "Asia/Kolkata"
+      },
+      "scheduledTime": {
+        "utc": "2026-07-20 19:30Z",
+        "local": "2026-07-21 01:00+05:30"
+      },
+      "revisedTime": {
+        "utc": "2026-07-20 19:20Z",
+        "local": "2026-07-21 00:50+05:30"
+      },
+      "terminal": "2",
+      "baggageBelt": "10",
+      "quality": [
+        "Basic",
+        "Live"
+      ]
+    },
+    "lastUpdatedUtc": "2026-07-21 06:46Z",
+    "number": "LH 756",
+    "callSign": "DLH756",
+    "status": "Arrived",
+    "codeshareStatus": "IsOperator",
+    "isCargo": false,
+    "aircraft": {
+      "reg": "D-AIGP",
+      "modeS": "3C64F0",
+      "model": "Airbus A340"
+    },
+    "airline": {
+      "name": "Lufthansa",
+      "iata": "LH",
+      "icao": "DLH"
+    }
+  }
+]
