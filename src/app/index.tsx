@@ -7,10 +7,12 @@ import { SAMPLE_FLIGHTS, type SampleFlight } from '@/data/sampleFlights';
 import { isValidDate, isValidFlightNumber, yesterdayIso } from '@/lib/format';
 import { lookupFlight } from '@/services/flightLookup';
 import { useClaim } from '@/state/claim';
+import { useClaims } from '@/state/claims';
 import { C, R, S, T } from '@/theme';
 
 export default function LookupScreen() {
   const { setFlight } = useClaim();
+  const { claims } = useClaims();
   const [number, setNumber] = useState('');
   const [date, setDate] = useState(yesterdayIso());
   const [loading, setLoading] = useState(false);
@@ -41,6 +43,13 @@ export default function LookupScreen() {
           <Ionicons name="airplane" size={18} color={C.accentInk} />
         </View>
         <Text style={styles.brand}>RefundDrop</Text>
+        <View style={{ flex: 1 }} />
+        {claims.length ? (
+          <Pressable onPress={() => router.push('/claims')} style={styles.claimsLink} hitSlop={8}>
+            <Ionicons name="folder-open-outline" size={16} color={C.text} />
+            <Text style={styles.claimsText}>My claims ({claims.length})</Text>
+          </Pressable>
+        ) : null}
       </View>
 
       <Text style={styles.hero}>Delayed or cancelled?</Text>
@@ -96,6 +105,8 @@ const styles = StyleSheet.create({
   brandRow: { flexDirection: 'row', alignItems: 'center', marginBottom: S.xxl },
   logo: { width: 30, height: 30, borderRadius: 8, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center', marginRight: S.sm },
   brand: { color: C.text, fontSize: 18, fontWeight: '800' },
+  claimsLink: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: C.line, borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 },
+  claimsText: { color: C.text, fontWeight: '700', fontSize: 13 },
   hero: { ...T.h1, color: C.text, fontSize: 34, lineHeight: 40 },
   sub: { ...T.body, color: C.muted, marginTop: S.sm },
   inputLabel: { ...T.label, color: C.muted, marginBottom: S.sm },

@@ -14,8 +14,10 @@ RefundDrop checks whether a delayed, cancelled or overbooked flight entitles you
 | Sample flights (demo mode, no API key needed) | Done |
 | Lookup → flight card → questions → verdict screens | Done |
 | AeroDataBox normalizer + Cloudflare Worker proxy | Done (deploy needs your own key) |
-| Tests | 58 passing |
-| RevenueCat paywall + Claim Kit | Next |
+| Claim Kit: claim letter, follow-up, escalation (copy, share, PDF) | Done |
+| On-device claim tracker with follow-up reminders | Done |
+| Tests | 64 passing |
+| RevenueCat paywall | Next |
 | Boarding-pass barcode scanning | Next |
 
 ## What makes it different
@@ -45,7 +47,8 @@ The US has no federal cash compensation for delays — DOT withdrew that proposa
 ## Project layout
 
 ```
-src/app/            Screens (Expo Router): lookup, flight, questions, verdict
+src/app/            Screens (Expo Router): lookup, flight, questions, verdict, kit, claims, letter
+src/claim/          Claim, follow-up and escalation letter templates
 src/components/     UI building blocks and the route arc
 src/rules/          Rules engine (pure TypeScript, no React)
   types.ts          Inputs and verdict types

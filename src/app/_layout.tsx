@@ -2,6 +2,7 @@ import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ClaimProvider } from '@/state/claim';
+import { ClaimsProvider } from '@/state/claims';
 import { C } from '@/theme';
 
 const theme = {
@@ -13,6 +14,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider value={theme}>
+        <ClaimsProvider>
         <ClaimProvider>
           <StatusBar style="light" />
           <Stack
@@ -23,6 +25,7 @@ export default function RootLayout() {
             }}
           />
         </ClaimProvider>
+        </ClaimsProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

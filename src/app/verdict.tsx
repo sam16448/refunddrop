@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Redirect, router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { BackBar, Button, Card, Pill, Screen, SectionLabel } from '@/components/ui';
 import { answersFor, effectiveFacts } from '@/lib/claim';
 import { evaluate, formatDuration, formatMoney, type Outcome, type StepStatus } from '@/rules';
@@ -66,7 +66,7 @@ export default function VerdictScreen() {
     <Button
       title="Get my Claim Kit"
       icon="document-text"
-      onPress={() => Alert.alert('Claim Kit', 'The claim letter, follow-ups and tracker arrive in the next build.')}
+      onPress={() => router.push('/kit')}
     />
   ) : (
     <Button
