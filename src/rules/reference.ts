@@ -97,17 +97,20 @@ export function airport(iata: string): Airport {
 }
 
 /**
+ * claimUrl values are the airlines' own claim / passenger-rights pages
+ * (checked September 2026). Others fall back to a web search in the app.
+ *
  * Operating licence decides EU261 coverage for flights INTO the EU (Art. 3(1)(b))
  * and UK261 coverage for flights into the UK. Swiss carriers are treated as
  * Community carriers under the EU–Switzerland air transport agreement.
  */
 const CARRIER_LIST: Carrier[] = [
   // EU / EEA / CH licence
-  { iata: 'LH', name: 'Lufthansa', licence: 'EU' },
-  { iata: 'AF', name: 'Air France', licence: 'EU' },
-  { iata: 'KL', name: 'KLM', licence: 'EU' },
+  { iata: 'LH', name: 'Lufthansa', licence: 'EU', claimUrl: 'https://www.lufthansa.com/us/en/passenger-rights' },
+  { iata: 'AF', name: 'Air France', licence: 'EU', claimUrl: 'https://wwws.airfrance.fr/en/information/legal/reclamation' },
+  { iata: 'KL', name: 'KLM', licence: 'EU', claimUrl: 'https://www.klm.com/information/refund-compensation/compensation' },
   { iata: 'IB', name: 'Iberia', licence: 'EU' },
-  { iata: 'VY', name: 'Vueling', licence: 'EU' },
+  { iata: 'VY', name: 'Vueling', licence: 'EU', claimUrl: 'https://help.vueling.com/hc/en-gb/articles/19798807271441-Claim-and-refunds' },
   { iata: 'UX', name: 'Air Europa', licence: 'EU' },
   { iata: 'AZ', name: 'ITA Airways', licence: 'EU' },
   { iata: 'SK', name: 'SAS', licence: 'EU' },
@@ -116,18 +119,18 @@ const CARRIER_LIST: Carrier[] = [
   { iata: 'LX', name: 'SWISS', licence: 'EU' },
   { iata: 'SN', name: 'Brussels Airlines', licence: 'EU' },
   { iata: 'TP', name: 'TAP Air Portugal', licence: 'EU' },
-  { iata: 'FR', name: 'Ryanair', licence: 'EU' },
+  { iata: 'FR', name: 'Ryanair', licence: 'EU', claimUrl: 'https://help.ryanair.com/hc/en-gb/articles/12891665589009-Applying-for-Compensation' },
   { iata: 'W6', name: 'Wizz Air', licence: 'EU' },
   { iata: 'EI', name: 'Aer Lingus', licence: 'EU' },
   { iata: 'EW', name: 'Eurowings', licence: 'EU' },
   { iata: 'DY', name: 'Norwegian', licence: 'EU' },
   { iata: 'LO', name: 'LOT Polish Airlines', licence: 'EU' },
   { iata: 'A3', name: 'Aegean Airlines', licence: 'EU' },
-  { iata: 'EC', name: 'easyJet Europe', licence: 'EU' },
+  { iata: 'EC', name: 'easyJet Europe', licence: 'EU', claimUrl: 'https://www.easyjet.com/en/claim/EU261' },
   // UK licence
-  { iata: 'BA', name: 'British Airways', licence: 'UK' },
+  { iata: 'BA', name: 'British Airways', licence: 'UK', claimUrl: 'https://www.britishairways.com/content/information/help-and-contacts/complaints-and-claims' },
   { iata: 'VS', name: 'Virgin Atlantic', licence: 'UK' },
-  { iata: 'U2', name: 'easyJet', licence: 'UK' },
+  { iata: 'U2', name: 'easyJet', licence: 'UK', claimUrl: 'https://www.easyjet.com/en/claim/EU261' },
   { iata: 'LS', name: 'Jet2', licence: 'UK' },
   { iata: 'BY', name: 'TUI Airways', licence: 'UK' },
   { iata: 'W9', name: 'Wizz Air UK', licence: 'UK' },

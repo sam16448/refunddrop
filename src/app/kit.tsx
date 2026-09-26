@@ -1,6 +1,6 @@
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Linking, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LetterView } from '@/components/LetterView';
 import { BackBar, Button, Card, Screen, SectionLabel } from '@/components/ui';
 import { buildClaimLetter, type ClaimDetails } from '@/claim/letters';
@@ -102,6 +102,21 @@ export default function KitScreen() {
 
       <SectionLabel>Claim letter</SectionLabel>
       <LetterView letter={letter} />
+      <View style={{ marginTop: S.md }}>
+        <Button
+          title={effFacts.operatingCarrier.claimUrl ? `Open ${effFacts.operatingCarrier.name}'s claim page` : `Find ${effFacts.operatingCarrier.name}'s claim form`}
+          icon="open-outline"
+          variant="ghost"
+          onPress={() =>
+            Linking.openURL(
+              effFacts.operatingCarrier.claimUrl ??
+                `https://www.google.com/search?q=${encodeURIComponent(
+                  `${effFacts.operatingCarrier.name} ${verdict.regime === 'US_DOT' ? 'refund request' : 'EU261 compensation claim form'}`,
+                )}`,
+            ).catch(() => {})
+          }
+        />
+      </View>
 
       <SectionLabel>Before you send</SectionLabel>
       {[
