@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "RefundDrop",
+    "slug": "refunddrop",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sam16448.refunddrop"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0B1220",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.sam16448.refunddrop"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "refunddrop"
+  }
+}
