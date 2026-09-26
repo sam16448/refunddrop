@@ -1,35 +1,95 @@
-import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
+import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold } from '@expo-google-fonts/inter';
+import { SpaceGrotesk_500Medium, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
+import { useFonts } from 'expo-font';
+import * as Notifications from 'expo-notifications';
+import { DarkTheme, Stack, ThemeProvider, router, type ErrorBoundaryProps } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ClaimProvider } from '@/state/claim';
 import { ClaimsProvider } from '@/state/claims';
 import { EntitlementsProvider } from '@/state/entitlements';
-import { C } from '@/theme';
+import { C, F, S } from '@/theme';
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const theme = {
   ...DarkTheme,
   colors: { ...DarkTheme.colors, background: C.bg, card: C.bg, text: C.text, border: C.line, primary: C.accent },
 };
 
+/** Shown instead of a crash screen if any screen throws. */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return (
+    <View style={styles.errorRoot}>
+      <Text style={styles.errorTitle}>Something went wrong</Text>
+      <Text style={styles.errorBody}>RefundDrop hit an unexpected problem. Your saved claims are safe on this phone.</Text>
+      <Text style={styles.errorDetail} numberOfLines={3}>
+        {error.message}
+      </Text>
+      <Pressable onPress={retry} style={styles.errorButton} accessibilityRole="button">
+        <Text style={styles.errorButtonText}>Try again</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+    SpaceGrotesk_500Medium,
+    SpaceGrotesk_700Bold,
+  });
+  const ready = fontsLoaded || Boolean(fontError);
+
+  useEffect(() => {
+    if (ready) SplashScreen.hideAsync().catch(() => {});
+  }, [ready]);
+
+  // Tapping a follow-up reminder opens the claims tracker.
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener(() => router.push('/claims'));
+    return () => sub.remove();
+  }, []);
+
+  if (!ready) return null;
+
   return (
     <SafeAreaProvider>
       <ThemeProvider value={theme}>
         <EntitlementsProvider>
-        <ClaimsProvider>
-        <ClaimProvider>
-          <StatusBar style="light" />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: C.bg },
-              animation: 'slide_from_right',
-            }}
-          />
-        </ClaimProvider>
-        </ClaimsProvider>
+          <ClaimsProvider>
+            <ClaimProvider>
+              <StatusBar style="light" />
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: C.bg },
+                  animation: 'slide_from_right',
+                }}
+              >
+                <Stack.Screen name="scan" options={{ animation: 'slide_from_bottom', presentation: 'fullScreenModal' }} />
+                <Stack.Screen name="paywall" options={{ animation: 'slide_from_bottom' }} />
+              </Stack>
+            </ClaimProvider>
+          </ClaimsProvider>
         </EntitlementsProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  errorRoot: { flex: 1, backgroundColor: C.bg, justifyContent: 'center', padding: S.xl, gap: S.md },
+  errorTitle: { color: C.text, fontSize: 26, fontFamily: F.display },
+  errorBody: { color: C.muted, fontSize: 15, lineHeight: 22 },
+  errorDetail: { color: C.faint, fontSize: 12 },
+  errorButton: { marginTop: S.md, backgroundColor: C.accent, borderRadius: 14, height: 52, alignItems: 'center', justifyContent: 'center' },
+  errorButtonText: { color: C.accentInk, fontSize: 16, fontWeight: '700' },
+});

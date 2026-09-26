@@ -11,9 +11,19 @@
  * Which flight a credit was spent on is remembered on-device.
  */
 
+import { isRunningInExpoGo } from 'expo';
 import Purchases, { LOG_LEVEL, type CustomerInfo, type PurchasesPackage } from 'react-native-purchases';
 
 export const API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY ?? '';
+
+/**
+ * How purchases behave in this run:
+ *  - live:    native RevenueCat SDK (development or store build with a key)
+ *  - preview: Expo Go, where store purchases can't run; unlocks locally and says so
+ *  - demo:    no RevenueCat key (e.g. someone running the open-source repo)
+ */
+export type PurchaseMode = 'live' | 'preview' | 'demo';
+export const PURCHASE_MODE: PurchaseMode = !API_KEY ? 'demo' : isRunningInExpoGo() ? 'preview' : 'live';
 export const PRO_ENTITLEMENT = 'pro';
 export const CLAIM_KIT_PRODUCT = 'claim_kit';
 
@@ -21,7 +31,7 @@ let configured = false;
 
 export function configurePurchases(): boolean {
   if (configured) return true;
-  if (!API_KEY) return false;
+  if (PURCHASE_MODE !== 'live') return false;
   try {
     Purchases.setLogLevel(LOG_LEVEL.WARN).catch(() => {});
     Purchases.configure({ apiKey: API_KEY });

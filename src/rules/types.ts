@@ -92,6 +92,8 @@ export interface PassengerAnswers {
   /** Did the passenger actually travel (on this flight or an alternative)? Needed for US refunds. */
   travelled?: boolean;
   reason?: DisruptionReason;
+  /** Passenger-reported arrival delay, used when flight data has no actual arrival time */
+  arrivalDelayMinutes?: number;
   /** Cancellation only: when the airline told the passenger */
   cancellationNotice?: NoticeBucket;
   reroute?: RerouteAnswer;

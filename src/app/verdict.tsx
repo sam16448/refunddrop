@@ -1,28 +1,32 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Redirect, router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { BackBar, Button, Card, Pill, Screen, SectionLabel } from '@/components/ui';
+import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { BackBar, Button, Pill, Screen, SectionLabel } from '@/components/ui';
 import { answersFor, effectiveFacts } from '@/lib/claim';
-import { evaluate, formatDuration, formatMoney, type Outcome, type StepStatus } from '@/rules';
+import { evaluate, formatDuration, formatMoney, type Outcome, type StepStatus, type Verdict } from '@/rules';
 import { useClaim } from '@/state/claim';
 import { flightKey, useEntitlements } from '@/state/entitlements';
-import { C, R, S, T } from '@/theme';
+import { C, F, R, S, T } from '@/theme';
 
-const OUTCOME_STYLE: Record<Outcome, { color: string; label: string; icon: keyof typeof Ionicons.glyphMap }> = {
-  likely: { color: C.accent, label: 'Likely eligible', icon: 'checkmark-circle' },
-  possible: { color: C.info, label: 'Possibly eligible', icon: 'help-circle' },
-  refund_only: { color: C.good, label: 'Refund, not compensation', icon: 'cash-outline' },
-  not_eligible: { color: C.muted, label: 'Not eligible', icon: 'close-circle' },
-  not_covered: { color: C.muted, label: 'Not covered', icon: 'remove-circle' },
+type IconName = keyof typeof Ionicons.glyphMap;
+
+const OUTCOME_STYLE: Record<Outcome, { color: string; soft: string; label: string; icon: IconName; gradient: [string, string] }> = {
+  likely: { color: C.accent, soft: C.accentSoft, label: 'Likely eligible', icon: 'checkmark-circle', gradient: ['#3A2A08', '#141B2C'] },
+  possible: { color: C.info, soft: C.infoSoft, label: 'Possibly eligible', icon: 'help-circle', gradient: ['#15294A', '#141B2C'] },
+  refund_only: { color: C.good, soft: C.goodSoft, label: 'Refund, not compensation', icon: 'cash-outline', gradient: ['#0F3326', '#141B2C'] },
+  not_eligible: { color: C.muted, soft: C.surfaceHi, label: 'Not eligible', icon: 'close-circle', gradient: ['#1C2436', '#141B2C'] },
+  not_covered: { color: C.muted, soft: C.surfaceHi, label: 'Not covered', icon: 'remove-circle', gradient: ['#1C2436', '#141B2C'] },
 };
 
-const STEP_ICON: Record<StepStatus, { name: keyof typeof Ionicons.glyphMap; color: string }> = {
+const STEP_ICON: Record<StepStatus, { name: IconName; color: string }> = {
   pass: { name: 'checkmark-circle', color: C.good },
   fail: { name: 'close-circle', color: C.bad },
   unknown: { name: 'help-circle', color: C.info },
-  info: { name: 'information-circle', color: C.muted },
+  info: { name: 'ellipse', color: C.faint },
 };
 
 /** Counts up from 0 to `target` over ~0.9s. */
@@ -40,6 +44,14 @@ function useCountUp(target: number): number {
     return () => clearInterval(id);
   }, [target]);
   return target <= 0 ? 0 : value;
+}
+
+function shareText(v: Verdict, flight: string, route: string): string {
+  const base = `RefundDrop checked ${flight} (${route})`;
+  if ((v.outcome === 'likely' || v.outcome === 'possible') && v.estimate) {
+    return `${base}: ${v.outcome === 'likely' ? 'likely eligible for about' : 'possibly eligible for up to'} ${formatMoney(v.estimate.perPassenger)} per passenger under ${v.regime}. If you were on it too, check yours.`;
+  }
+  return `${base}: ${v.headline}.`;
 }
 
 export default function VerdictScreen() {
@@ -60,13 +72,14 @@ export default function VerdictScreen() {
   if (!facts || !verdict) return <Redirect href="/" />;
 
   const style = OUTCOME_STYLE[verdict.outcome];
-  const hasMoney = verdict.estimate && (verdict.outcome === 'likely' || verdict.outcome === 'possible');
-  const currency = verdict.estimate?.perPassenger.currency ?? 'EUR';
+  const hasMoney = Boolean(est) && (verdict.outcome === 'likely' || verdict.outcome === 'possible');
+  const currency = est?.perPassenger.currency ?? 'EUR';
   const eligibleForKit = verdict.outcome === 'likely' || verdict.outcome === 'possible' || verdict.outcome === 'refund_only';
+  const route = `${facts.origin.iata}→${facts.destination.iata}`;
 
   const footer = eligibleForKit ? (
     <Button
-      title="Get my Claim Kit"
+      title={verdict.outcome === 'refund_only' ? 'Get my refund request' : 'Get my Claim Kit'}
       icon="document-text"
       onPress={() => router.push(isUnlocked(flightKey(facts)) ? '/kit' : '/paywall')}
     />
@@ -83,95 +96,135 @@ export default function VerdictScreen() {
 
   return (
     <Screen footer={footer}>
-      <BackBar onBack={() => router.back()} title={`${facts.flightNumber} · ${facts.origin.iata} → ${facts.destination.iata}`} />
+      <BackBar
+        onBack={() => router.back()}
+        title={`${facts.flightNumber} · ${facts.origin.iata} → ${facts.destination.iata}`}
+        right={
+          <Pressable
+            accessibilityLabel="Share result"
+            hitSlop={10}
+            onPress={() => Share.share({ message: shareText(verdict, facts.flightNumber, route) }).catch(() => {})}
+            style={styles.shareButton}
+          >
+            <Ionicons name="share-outline" size={18} color={C.text} />
+          </Pressable>
+        }
+      />
 
-      <Card style={{ borderWidth: 1, borderColor: style.color }}>
-        <View style={styles.outcomeRow}>
-          <Ionicons name={style.icon} size={22} color={style.color} />
-          <Text style={[styles.outcomeLabel, { color: style.color }]}>{style.label}</Text>
-        </View>
+      <Animated.View entering={FadeInUp.duration(500)}>
+        <LinearGradient colors={style.gradient} start={{ x: 0, y: 0 }} end={{ x: 0.8, y: 1 }} style={[styles.hero, { borderColor: style.color }]}>
+          <View style={[styles.badge, { backgroundColor: style.soft }]}>
+            <Ionicons name={style.icon} size={16} color={style.color} />
+            <Text style={[styles.badgeText, { color: style.color }]}>{style.label}</Text>
+          </View>
 
-        {hasMoney ? (
-          <>
-            <Text style={[styles.amount, { color: style.color }]}>
-              {verdict.outcome === 'possible' ? 'up to ' : ''}
-              {formatMoney({ amount: shown, currency })}
+          {hasMoney ? (
+            <>
+              <Text style={[styles.amount, { color: style.color }]}>
+                {verdict.outcome === 'possible' ? <Text style={styles.upTo}>up to </Text> : null}
+                {formatMoney({ amount: shown, currency })}
+              </Text>
+              <Text style={styles.perPax}>
+                per passenger{est?.reduced ? ` · reduced from ${formatMoney(est.fullAmount)}` : ''}
+              </Text>
+            </>
+          ) : (
+            <Text style={styles.headline}>{verdict.headline}</Text>
+          )}
+
+          <View style={styles.pills}>
+            {verdict.regime !== 'NONE' ? <Pill text={verdict.regime.replace('_', ' ')} color={C.text} icon="document-outline" /> : null}
+            {verdict.delayMinutes !== undefined && verdict.delayMinutes > 0 ? (
+              <Pill text={`${formatDuration(verdict.delayMinutes)} late`} color={C.text} icon="time-outline" />
+            ) : null}
+            <Pill text={verdict.claimAgainst.name} color={C.text} icon="airplane-outline" />
+          </View>
+        </LinearGradient>
+      </Animated.View>
+
+      {hasMoney && verdict.outcome === 'likely' && est ? (
+        <Animated.View entering={FadeInDown.delay(200).duration(450)} style={styles.keep}>
+          <Ionicons name="wallet" size={18} color={C.good} />
+          <Text style={styles.keepText}>
+            A claim company would keep about{' '}
+            <Text style={{ fontFamily: F.bold, color: C.text }}>
+              {formatMoney({ amount: Math.round(est.perPassenger.amount * 0.35), currency })}
             </Text>
-            <Text style={styles.perPax}>
-              per passenger{verdict.estimate?.reduced ? ` · reduced from ${formatMoney(verdict.estimate.fullAmount)}` : ''}
-            </Text>
-          </>
-        ) : (
-          <Text style={styles.headline}>{verdict.headline}</Text>
-        )}
-
-        <View style={styles.pills}>
-          {verdict.regime !== 'NONE' ? <Pill text={verdict.regime.replace('_', ' ')} color={C.muted} /> : null}
-          {verdict.delayMinutes !== undefined && verdict.delayMinutes > 0 ? (
-            <Pill text={`${formatDuration(verdict.delayMinutes)} late`} color={C.muted} />
-          ) : null}
-          <Pill text={`Claim from ${verdict.claimAgainst.name}`} color={C.muted} />
-        </View>
-      </Card>
-
-      {hasMoney && verdict.outcome === 'likely' ? (
-        <Text style={styles.keep}>
-          Claim companies typically keep 25–35% of this. With RefundDrop you file it yourself and keep all of it.
-        </Text>
+            . File it yourself and keep all of it.
+          </Text>
+        </Animated.View>
       ) : null}
 
-      <SectionLabel>Why</SectionLabel>
-      {verdict.steps.map((step, i) => (
-        <View key={i} style={styles.step}>
-          <Ionicons name={STEP_ICON[step.status].name} size={20} color={STEP_ICON[step.status].color} style={{ marginTop: 1 }} />
-          <View style={styles.stepBody}>
-            <Text style={styles.stepLabel}>{step.label}</Text>
-            <Text style={styles.stepDetail}>{step.detail}</Text>
-            {step.ruleRef ? <Text style={styles.ruleRef}>{step.ruleRef}</Text> : null}
-          </View>
-        </View>
-      ))}
+      <SectionLabel>How we decided</SectionLabel>
+      <View>
+        {verdict.steps.map((step, i) => (
+          <Animated.View key={i} entering={FadeInDown.delay(250 + i * 70).duration(400)} style={styles.step}>
+            <View style={styles.rail}>
+              <Ionicons name={STEP_ICON[step.status].name} size={step.status === 'info' ? 10 : 20} color={STEP_ICON[step.status].color} />
+              {i < verdict.steps.length - 1 ? <View style={styles.railLine} /> : null}
+            </View>
+            <View style={styles.stepBody}>
+              <Text style={styles.stepLabel}>{step.label}</Text>
+              <Text style={styles.stepDetail}>{step.detail}</Text>
+              {step.ruleRef ? <Text style={styles.ruleRef}>{step.ruleRef}</Text> : null}
+            </View>
+          </Animated.View>
+        ))}
+      </View>
 
       {verdict.openQuestions.length ? (
         <>
           <SectionLabel>Still to confirm</SectionLabel>
-          {verdict.openQuestions.map((q) => (
-            <Text key={q} style={styles.bullet}>
-              • {q}
-            </Text>
-          ))}
+          <View style={[styles.box, { backgroundColor: C.infoSoft }]}>
+            {verdict.openQuestions.map((q) => (
+              <View key={q} style={styles.bulletRow}>
+                <Ionicons name="help-circle-outline" size={16} color={C.info} />
+                <Text style={styles.bulletText}>{q}</Text>
+              </View>
+            ))}
+          </View>
         </>
       ) : null}
 
       <SectionLabel>Also owed to you</SectionLabel>
-      {verdict.otherRights.map((r) => (
-        <Text key={r} style={styles.bullet}>
-          • {r}
-        </Text>
-      ))}
-
-      <View style={styles.disclaimer}>
-        <Text style={styles.disclaimerText}>{verdict.disclaimer}</Text>
-        <Text style={[styles.disclaimerText, { marginTop: 4 }]}>Rules: {verdict.rulesVersion}</Text>
+      <View style={styles.box}>
+        {verdict.otherRights.map((r) => (
+          <View key={r} style={styles.bulletRow}>
+            <Ionicons name="checkmark" size={16} color={C.good} />
+            <Text style={styles.bulletText}>{r}</Text>
+          </View>
+        ))}
       </View>
+
+      <Text style={styles.disclaimer}>
+        {verdict.disclaimer}
+        {'\n'}Rules: {verdict.rulesVersion}
+      </Text>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  outcomeRow: { flexDirection: 'row', alignItems: 'center', gap: S.sm },
-  outcomeLabel: { fontSize: 16, fontWeight: '800' },
-  amount: { fontSize: 56, fontWeight: '900', letterSpacing: -1.5, marginTop: S.md },
-  perPax: { color: C.muted, fontSize: 14 },
-  headline: { ...T.h2, color: C.text, marginTop: S.md, lineHeight: 26 },
+  shareButton: { width: 38, height: 38, borderRadius: 12, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
+  hero: { borderRadius: R.xl, padding: S.xl, borderWidth: 1 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
+  badgeText: { fontFamily: F.bold, fontSize: 13 },
+  amount: { fontFamily: F.display, fontSize: 64, letterSpacing: -2, marginTop: S.md, lineHeight: 72 },
+  upTo: { fontFamily: F.displayMedium, fontSize: 26, letterSpacing: 0 },
+  perPax: { ...T.small, color: C.muted },
+  headline: { ...T.h1, color: C.text, fontSize: 26, marginTop: S.md },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: S.sm, marginTop: S.lg },
-  keep: { ...T.small, color: C.text, marginTop: S.lg, backgroundColor: C.surfaceHi, padding: S.md, borderRadius: R.md, overflow: 'hidden' },
-  step: { flexDirection: 'row', gap: S.md, paddingVertical: S.md, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.line },
-  stepBody: { flex: 1 },
-  stepLabel: { color: C.text, fontSize: 15, fontWeight: '700' },
+  keep: { flexDirection: 'row', gap: S.md, alignItems: 'center', marginTop: S.lg, backgroundColor: C.goodSoft, padding: S.lg, borderRadius: R.lg },
+  keepText: { ...T.small, color: C.muted, flex: 1 },
+  step: { flexDirection: 'row', gap: S.md },
+  rail: { width: 22, alignItems: 'center', paddingTop: 2 },
+  railLine: { flex: 1, width: 2, backgroundColor: C.line, marginTop: 4, marginBottom: -2, borderRadius: 1 },
+  stepBody: { flex: 1, paddingBottom: S.lg },
+  stepLabel: { color: C.text, fontSize: 15, fontFamily: F.bold },
   stepDetail: { ...T.small, color: C.muted, marginTop: 3 },
-  ruleRef: { color: C.info, fontSize: 11, marginTop: 4 },
-  bullet: { ...T.small, color: C.text, marginBottom: S.sm },
-  disclaimer: { marginTop: S.xl, padding: S.md, borderRadius: R.md, borderWidth: 1, borderColor: C.line },
-  disclaimerText: { color: C.faint, fontSize: 11, lineHeight: 16 },
+  ruleRef: { color: C.info, fontSize: 11, fontFamily: F.semibold, marginTop: 5 },
+  box: { backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, gap: S.sm },
+  bulletRow: { flexDirection: 'row', gap: S.sm, alignItems: 'flex-start' },
+  bulletText: { ...T.small, color: C.text, flex: 1 },
+  disclaimer: { color: C.faint, fontSize: 11, lineHeight: 16, marginTop: S.xl, fontFamily: F.body },
 });

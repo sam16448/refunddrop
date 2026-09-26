@@ -1,10 +1,11 @@
 import { Redirect, router } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
 import { BackBar, Button, ChipGroup, Screen } from '@/components/ui';
 import { determineScope, type DisruptionReason, type NoticeBucket, type PassengerAnswers } from '@/rules';
 import { useClaim, type Experience } from '@/state/claim';
-import { C, S, T } from '@/theme';
+import { C, F, S, T } from '@/theme';
 
 const REASONS: { value: DisruptionReason; label: string }[] = [
   { value: 'technical', label: 'Technical problem' },
@@ -40,11 +41,11 @@ const YES_NO: { value: YesNo; label: string }[] = [
 
 function Question({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <View style={styles.q}>
+    <Animated.View entering={FadeInDown.duration(350)} layout={LinearTransition} style={styles.q}>
       <Text style={styles.qTitle}>{title}</Text>
       {hint ? <Text style={styles.qHint}>{hint}</Text> : null}
       <View style={{ marginTop: S.md }}>{children}</View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -90,7 +91,7 @@ export default function QuestionsScreen() {
   );
 
   return (
-    <Screen footer={<Button title="See my result" onPress={() => router.push('/verdict')} />}>
+    <Screen footer={<Button title="See my result" icon="sparkles" onPress={() => router.push('/verdict')} />}>
       <BackBar onBack={() => router.back()} title={`${facts.flightNumber} · ${facts.origin.iata} → ${facts.destination.iata}`} />
       <Text style={styles.title}>A few quick questions</Text>
       <Text style={styles.sub}>Only things the flight data can’t tell us.</Text>
@@ -98,9 +99,9 @@ export default function QuestionsScreen() {
       <Question title="What happened to you?">
         <ChipGroup<Experience>
           options={[
-            { value: 'delay', label: 'Delayed' },
-            { value: 'cancel', label: 'Cancelled' },
-            { value: 'denied', label: 'Refused boarding' },
+            { value: 'delay', label: 'Delayed', icon: 'time-outline' },
+            { value: 'cancel', label: 'Cancelled', icon: 'close-circle-outline' },
+            { value: 'denied', label: 'Refused boarding', icon: 'hand-left-outline' },
           ]}
           value={experience}
           onChange={setExperience}
@@ -122,6 +123,15 @@ export default function QuestionsScreen() {
 
       {european && experience === 'delay' ? (
         <>
+          {!facts.actualArrivalUtc && !conn?.sameBooking ? (
+            <Question title="How late did you arrive?" hint="Flight data has no arrival time for this flight yet.">
+              <ChipGroup
+                options={FINAL_DELAY_BUCKETS}
+                value={answers.arrivalDelayMinutes !== undefined ? String(answers.arrivalDelayMinutes) : undefined}
+                onChange={(v) => update({ arrivalDelayMinutes: Number(v) })}
+              />
+            </Question>
+          ) : null}
           <Question title="Was this part of a longer trip on one booking?" hint="For example, a connection booked on the same ticket.">
             <ChipGroup<YesNo>
               options={YES_NO}
@@ -189,7 +199,7 @@ export default function QuestionsScreen() {
 const styles = StyleSheet.create({
   title: { ...T.h1, color: C.text },
   sub: { ...T.body, color: C.muted, marginTop: S.xs },
-  q: { marginTop: S.xl },
-  qTitle: { color: C.text, fontSize: 17, fontWeight: '700' },
+  q: { marginTop: S.lg, backgroundColor: C.surface, borderRadius: 20, padding: S.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
+  qTitle: { color: C.text, fontSize: 17, fontFamily: F.bold },
   qHint: { ...T.small, color: C.muted, marginTop: 4 },
 });

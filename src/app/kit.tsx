@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import { Linking, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -9,7 +10,7 @@ import { evaluate, formatMoney } from '@/rules';
 import { useClaim } from '@/state/claim';
 import { useClaims } from '@/state/claims';
 import { flightKey, useEntitlements } from '@/state/entitlements';
-import { C, R, S, T } from '@/theme';
+import { C, F, R, S, T } from '@/theme';
 
 function Field({
   label,
@@ -85,7 +86,12 @@ export default function KitScreen() {
   return (
     <Screen footer={<Button title="Save to my claims" icon="bookmark" onPress={save} disabled={!name.trim()} />}>
       <BackBar onBack={() => router.back()} title="Your Claim Kit" />
-      {ent.demo ? <Text style={styles.demo}>Demo mode: no RevenueCat key configured, so the kit is unlocked.</Text> : null}
+      <View style={styles.unlocked}>
+        <Ionicons name="lock-open" size={14} color={C.good} />
+        <Text style={styles.unlockedText}>
+          Claim Kit unlocked{ent.mode === 'preview' ? ' · Expo Go preview' : ent.mode === 'demo' ? ' · demo mode' : ''}
+        </Text>
+      </View>
       <Text style={styles.title}>{total ? `Claim ${total}` : 'Request your refund'}</Text>
       <Text style={styles.sub}>
         Your letter cites the exact rules that apply. Send it through {verdict.claimAgainst.name}’s official claim form or
@@ -119,22 +125,29 @@ export default function KitScreen() {
       </View>
 
       <SectionLabel>Before you send</SectionLabel>
-      {[
-        'Attach your booking confirmation and boarding pass (photos are fine).',
-        'Keep receipts for meals, hotels or taxis — those are claimed separately.',
-        'Save the claim here so we remind you to follow up after 14 days.',
-      ].map((t) => (
-        <Text key={t} style={styles.bullet}>
-          • {t}
-        </Text>
-      ))}
+      <Card style={{ gap: S.md }}>
+        {[
+          { icon: 'attach' as const, t: 'Attach your booking confirmation and boarding pass (photos are fine).' },
+          { icon: 'receipt-outline' as const, t: 'Keep receipts for meals, hotels or taxis — those are claimed separately.' },
+          { icon: 'notifications-outline' as const, t: 'Save the claim and mark it Sent — we’ll remind you to follow up after 14 days.' },
+        ].map((b) => (
+          <View key={b.t} style={styles.bulletRow}>
+            <Ionicons name={b.icon} size={16} color={C.accent} />
+            <Text style={styles.bullet}>{b.t}</Text>
+          </View>
+        ))}
+      </Card>
+      {!name.trim() ? <Text style={styles.hint}>Add your name above to save this claim.</Text> : null}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  title: { ...T.h1, color: C.accent },
-  demo: { color: C.info, fontSize: 12, marginBottom: S.sm },
+  title: { ...T.h1, color: C.accent, marginTop: S.sm },
+  unlocked: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: C.goodSoft, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
+  unlockedText: { color: C.good, fontFamily: F.bold, fontSize: 12 },
+  bulletRow: { flexDirection: 'row', gap: S.sm, alignItems: 'flex-start' },
+  hint: { ...T.small, color: C.faint, textAlign: 'center', marginTop: S.lg },
   sub: { ...T.body, color: C.muted, marginTop: S.xs },
   label: { ...T.label, color: C.muted, fontSize: 11, marginBottom: 6 },
   input: {
@@ -144,8 +157,9 @@ const styles = StyleSheet.create({
     borderColor: C.line,
     color: C.text,
     fontSize: 16,
+    fontFamily: F.medium,
     paddingHorizontal: S.md,
-    height: 48,
+    height: 50,
   },
-  bullet: { ...T.small, color: C.text, marginBottom: S.sm },
+  bullet: { ...T.small, color: C.text, flex: 1 },
 });

@@ -17,6 +17,8 @@ export interface SavedClaim {
   status: ClaimStatus;
   /** YYYY-MM-DD the claim letter was sent */
   sentOn?: string;
+  /** Scheduled local follow-up reminder */
+  reminderId?: string;
 }
 
 const KEY = 'refunddrop.claims.v1';
@@ -45,9 +47,13 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoaded(true));
   }, []);
 
-  const persist = useCallback((next: SavedClaim[]) => {
-    setClaims(next);
-    AsyncStorage.setItem(KEY, JSON.stringify(next)).catch(() => {});
+  /** Functional update so async callers (reminders) never overwrite newer state. */
+  const mutate = useCallback((fn: (prev: SavedClaim[]) => SavedClaim[]) => {
+    setClaims((prev) => {
+      const next = fn(prev);
+      AsyncStorage.setItem(KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
   }, []);
 
   const add = useCallback<ClaimsState['add']>(
@@ -58,18 +64,18 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
         createdAt: new Date().toISOString(),
         status: 'drafted',
       };
-      persist([saved, ...claims]);
+      mutate((prev) => [saved, ...prev]);
       return saved;
     },
-    [claims, persist],
+    [mutate],
   );
 
   const update = useCallback<ClaimsState['update']>(
-    (id, patch) => persist(claims.map((c) => (c.id === id ? { ...c, ...patch } : c))),
-    [claims, persist],
+    (id, patch) => mutate((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c))),
+    [mutate],
   );
 
-  const remove = useCallback<ClaimsState['remove']>((id) => persist(claims.filter((c) => c.id !== id)), [claims, persist]);
+  const remove = useCallback<ClaimsState['remove']>((id) => mutate((prev) => prev.filter((c) => c.id !== id)), [mutate]);
 
   const value = useMemo(() => ({ claims, loaded, add, update, remove }), [claims, loaded, add, update, remove]);
   return <ClaimsContext.Provider value={value}>{children}</ClaimsContext.Provider>;

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Letter } from '@/claim/letters';
 import { copyLetter, shareLetter, shareLetterPdf } from '@/lib/share';
-import { C, R, S, T } from '@/theme';
+import { C, F, R, S, T } from '@/theme';
 
 function Action({ icon, label, onPress }: { icon: keyof typeof Ionicons.glyphMap; label: string; onPress: () => void }) {
   return (
@@ -36,10 +36,10 @@ export function LetterView({ letter }: { letter: Letter }) {
 }
 
 const styles = StyleSheet.create({
-  paper: { backgroundColor: '#F7F4EC', borderRadius: R.md, padding: S.lg },
-  to: { color: '#6B6457', fontSize: 12, marginBottom: S.sm },
-  subject: { color: '#1C1A16', fontSize: 15, fontWeight: '800', marginBottom: S.md },
-  body: { color: '#1C1A16', ...T.small, lineHeight: 20 },
+  paper: { backgroundColor: C.paper, borderRadius: R.lg, padding: S.xl },
+  to: { color: '#6B6457', fontSize: 12, marginBottom: S.sm, fontFamily: F.medium },
+  subject: { color: C.paperInk, fontSize: 15, fontFamily: F.bold, marginBottom: S.md, lineHeight: 21 },
+  body: { color: C.paperInk, ...T.small, lineHeight: 20 },
   actions: { flexDirection: 'row', gap: S.sm, marginTop: S.md },
   action: {
     flex: 1,
@@ -53,5 +53,5 @@ const styles = StyleSheet.create({
     borderColor: C.line,
     backgroundColor: C.surface,
   },
-  actionText: { color: C.text, fontWeight: '700', fontSize: 14 },
+  actionText: { color: C.text, fontFamily: F.bold, fontSize: 14 },
 });

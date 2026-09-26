@@ -23,7 +23,7 @@ Airlines owe passengers €250–€600 for long delays, short-notice cancellati
 | **Ask** | Only what data can't know: connections, the cause the airline gave, cancellation notice, replacement flight, overbooking |
 | **Verdict** | *Likely*, *possibly*, *refund only*, *not eligible* or *not covered* — with every rule it applied, what's still unconfirmed, and other rights (meals, hotels, refunds) |
 | **Claim Kit** | Claim letter, day-14 follow-up and escalation to the right national enforcement body; copy, share or PDF |
-| **Track** | On-device tracker: Drafted → Sent → Replied → Paid, with follow-up reminders |
+| **Track** | On-device tracker: Drafted → Sent → Replied → Paid, with a real day-14 follow-up notification |
 
 ## Monetization (RevenueCat)
 
@@ -35,7 +35,7 @@ Airlines owe passengers €250–€600 for long delays, short-notice cancellati
 - The eligibility check is **always free** — trust is the funnel, and people claim rarely, so per-claim pricing matches how they actually use it. Frequent travellers get the subscription.
 - The paywall shows the real comparison for *their* flight: a claim company's ~35% fee vs $4.99.
 - Claim Kit purchases are counted from RevenueCat's non-subscription transactions, so each purchase is one credit that survives reinstalls via **Restore purchases**. The flight a credit was spent on is remembered on-device.
-- Running the open-source repo without a RevenueCat key switches to a clearly-labelled **demo mode** so anyone can explore the full flow.
+- In **Expo Go** (where store purchases can't run) the paywall shows the same plans and unlocks locally with a clear "preview" label; without a RevenueCat key the repo runs in a labelled **demo mode**. Real purchases run in development and store builds.
 
 ## What makes it different
 
@@ -85,7 +85,7 @@ The app never holds the flight-data API key, so the repository can stay public. 
 
 ```
 src/app/            Screens (Expo Router): intro, lookup, scan, flight, questions,
-                    verdict, paywall, kit, claims, letter
+                    verdict, paywall, kit, claims, letter, about
 src/rules/          Rules engine (pure TypeScript, no React)
   types.ts          Inputs and verdict types
   config.ts         Versioned thresholds and amounts
@@ -97,7 +97,7 @@ src/services/       Flight lookup, AeroDataBox normalizer, boarding-pass parser,
 src/state/          Flow state, claim tracker, entitlements
 src/data/           Sample flights and sample boarding pass
 worker/             Cloudflare Worker proxy
-tests/              Vitest suite (73 tests)
+tests/              Vitest suite (74 tests)
 docs/               Sample boarding pass for demos
 ```
 
@@ -109,7 +109,7 @@ You need [Node.js LTS](https://nodejs.org) and [Git](https://git-scm.com).
 git clone https://github.com/sam16448/refunddrop.git
 cd refunddrop
 npm install
-npm test            # 73 tests: rules engine, letters, boarding passes, API normalizer
+npm test            # 74 tests: rules engine, letters, boarding passes, API normalizer
 npx expo start      # opens in Expo Go (purchases run in RevenueCat preview mode)
 ```
 

@@ -416,6 +416,13 @@ function evaluateCompensation(facts: FlightFacts, answers: PassengerAnswers, sco
       delayMinutes = conn.finalArrivalDelayMinutes;
     } else if (facts.actualArrivalUtc) {
       delayMinutes = minutesBetween(facts.scheduledArrivalUtc, facts.actualArrivalUtc);
+    } else if (answers.arrivalDelayMinutes !== undefined) {
+      delayMinutes = answers.arrivalDelayMinutes;
+      steps.push({
+        label: 'Arrival time from you',
+        detail: 'Flight data had no actual arrival time, so this uses the delay you reported. Keep proof, such as a photo of the arrivals board or a timestamped message.',
+        status: 'info',
+      });
     }
 
     if (delayMinutes === undefined) {

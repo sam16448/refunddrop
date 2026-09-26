@@ -10,7 +10,7 @@ import { SAMPLE_BOARDING_PASS } from '@/data/sampleBoardingPass';
 import { BoardingPassError, parseBoardingPass } from '@/services/boardingPass';
 import { lookupFlight } from '@/services/flightLookup';
 import { useClaim } from '@/state/claim';
-import { C, R, S, T } from '@/theme';
+import { C, F, R, S, T } from '@/theme';
 
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000' },
   overlay: { flex: 1, justifyContent: 'space-between' },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: S.xl, paddingTop: S.md },
-  topTitle: { color: C.text, fontSize: 17, fontWeight: '800' },
+  topTitle: { color: C.text, fontSize: 17, fontFamily: F.bold },
   frameWrap: { alignItems: 'center', paddingHorizontal: S.xl },
   frame: { width: '100%', aspectRatio: 1.6, borderWidth: 3, borderColor: C.accent, borderRadius: R.lg },
   hint: { color: C.text, textAlign: 'center', marginTop: S.md, ...T.small, textShadowColor: '#000', textShadowRadius: 6 },
@@ -111,6 +111,6 @@ const styles = StyleSheet.create({
   permText: { color: C.muted, textAlign: 'center', ...T.body },
   bottom: { paddingHorizontal: S.xl, paddingBottom: S.lg, gap: S.md },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: S.md, backgroundColor: C.surface, padding: S.md, borderRadius: R.md },
-  statusText: { color: C.text, fontWeight: '700' },
+  statusText: { color: C.text, fontFamily: F.bold },
   error: { color: C.bad, backgroundColor: C.surface, padding: S.md, borderRadius: R.md, overflow: 'hidden', ...T.small },
 });

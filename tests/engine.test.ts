@@ -178,6 +178,12 @@ describe('delays', () => {
     expect(v.openQuestions).toContain('What time did you actually arrive?');
   });
 
+  it('uses a passenger-reported delay when there is no actual arrival time', () => {
+    const v = evaluate(flight('BCN', 'LGW', 'VY'), { ...technical, arrivalDelayMinutes: 210 });
+    expect(v.outcome).toBe('likely');
+    expect(v.delayMinutes).toBe(210);
+  });
+
   it('offers the refund option once a delay reaches 5 hours', () => {
     const v = evaluate(flight('BCN', 'LGW', 'VY', { arrivalDelay: 310 }), technical);
     expect(v.otherRights.join(' ')).toMatch(/5 hours/);
