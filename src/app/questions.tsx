@@ -125,8 +125,8 @@ export default function QuestionsScreen() {
           <Question title="Was this part of a longer trip on one booking?" hint="For example, a connection booked on the same ticket.">
             <ChipGroup<YesNo>
               options={YES_NO}
-              value={conn === undefined ? undefined : conn.sameBooking ? 'yes' : 'no'}
-              onChange={(v) => update({ connection: v === 'yes' ? { sameBooking: true } : undefined })}
+              value={conn === undefined ? undefined : conn?.sameBooking ? 'yes' : 'no'}
+              onChange={(v) => update({ connection: v === 'yes' ? { sameBooking: true } : null })}
             />
           </Question>
           {conn?.sameBooking ? (

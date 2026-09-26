@@ -95,7 +95,8 @@ export interface PassengerAnswers {
   /** Cancellation only: when the airline told the passenger */
   cancellationNotice?: NoticeBucket;
   reroute?: RerouteAnswer;
-  connection?: ConnectionAnswer;
+  /** null = the passenger said this was not part of a longer trip */
+  connection?: ConnectionAnswer | null;
   deniedBoarding?: {
     happened: boolean;
     voluntary?: boolean;

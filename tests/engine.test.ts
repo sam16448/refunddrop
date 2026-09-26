@@ -195,6 +195,12 @@ describe('connections', () => {
     expect(v.delayMinutes).toBe(300);
   });
 
+  it('"not part of a longer trip" adds no connection step', () => {
+    const v = evaluate(flight('FRA', 'BOM', 'LH', { arrivalDelay: 252 }), { ...technical, connection: null });
+    expect(v.outcome).toBe('likely');
+    expect(v.steps.some((s) => /bookings|final destination/.test(s.label))).toBe(false);
+  });
+
   it('ignores a missed connection on a separate booking', () => {
     const v = evaluate(flight('LIS', 'FRA', 'TP', { arrivalDelay: 45 }), {
       ...technical,
