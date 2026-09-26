@@ -70,7 +70,25 @@ const AIRPORT_LIST: Airport[] = [
   { iata: 'SYD', name: 'Sydney Kingsford Smith', city: 'Sydney', country: 'AU', lat: -33.9399, lon: 151.1753 },
 ];
 
-export const AIRPORTS: Record<string, Airport> = Object.fromEntries(AIRPORT_LIST.map((a) => [a.iata, a]));
+/** Display time zones by country, with overrides for multi-zone countries. */
+const COUNTRY_TZ: Record<string, string> = {
+  FR: 'Europe/Paris', DE: 'Europe/Berlin', NL: 'Europe/Amsterdam', ES: 'Europe/Madrid', IT: 'Europe/Rome',
+  PT: 'Europe/Lisbon', IE: 'Europe/Dublin', DK: 'Europe/Copenhagen', SE: 'Europe/Stockholm', NO: 'Europe/Oslo',
+  FI: 'Europe/Helsinki', AT: 'Europe/Vienna', CH: 'Europe/Zurich', BE: 'Europe/Brussels', GR: 'Europe/Athens',
+  PL: 'Europe/Warsaw', HU: 'Europe/Budapest', CZ: 'Europe/Prague', IS: 'Atlantic/Reykjavik', GB: 'Europe/London',
+  IN: 'Asia/Kolkata', AE: 'Asia/Dubai', QA: 'Asia/Qatar', TR: 'Europe/Istanbul', SG: 'Asia/Singapore',
+  JP: 'Asia/Tokyo', HK: 'Asia/Hong_Kong', CA: 'America/Toronto', AU: 'Australia/Sydney',
+};
+const AIRPORT_TZ: Record<string, string> = {
+  TFS: 'Atlantic/Canary', LPA: 'Atlantic/Canary', RUN: 'Indian/Reunion',
+  JFK: 'America/New_York', EWR: 'America/New_York', BOS: 'America/New_York', IAD: 'America/New_York',
+  MIA: 'America/New_York', ATL: 'America/New_York', ORD: 'America/Chicago', DFW: 'America/Chicago',
+  SFO: 'America/Los_Angeles', LAX: 'America/Los_Angeles', SEA: 'America/Los_Angeles',
+};
+
+export const AIRPORTS: Record<string, Airport> = Object.fromEntries(
+  AIRPORT_LIST.map((a) => [a.iata, { ...a, tz: AIRPORT_TZ[a.iata] ?? COUNTRY_TZ[a.country] }]),
+);
 
 export function airport(iata: string): Airport {
   const found = AIRPORTS[iata.toUpperCase()];

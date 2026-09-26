@@ -19,6 +19,8 @@ export interface Airport {
   country: string;
   lat: number;
   lon: number;
+  /** IANA time zone, used only for display */
+  tz?: string;
 }
 
 export interface Carrier {

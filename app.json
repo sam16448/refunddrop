@@ -23,6 +23,9 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "scheme": "refunddrop"
+    "scheme": "refunddrop",
+    "plugins": [
+      "expo-router"
+    ]
   }
 }

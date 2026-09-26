@@ -10,13 +10,13 @@ RefundDrop checks whether a delayed, cancelled or overbooked flight entitles you
 
 | Part | State |
 | --- | --- |
-| Rules engine (EU261, UK261, US DOT refunds) | Done, 51 tests |
+| Rules engine (EU261, UK261, US DOT refunds) | Done |
 | Sample flights (demo mode, no API key needed) | Done |
-| Preview screen | Done |
-| Flight lookup via AeroDataBox + Cloudflare Worker proxy | Day 2 |
-| Scan → flight card → questions → verdict screens | Day 2 |
-| RevenueCat paywall + Claim Kit | Day 3 |
-| Boarding-pass barcode scanning | Day 3–4 |
+| Lookup → flight card → questions → verdict screens | Done |
+| AeroDataBox normalizer + Cloudflare Worker proxy | Done (deploy needs your own key) |
+| Tests | 58 passing |
+| RevenueCat paywall + Claim Kit | Next |
+| Boarding-pass barcode scanning | Next |
 
 ## What makes it different
 
@@ -45,16 +45,30 @@ The US has no federal cash compensation for delays — DOT withdrew that proposa
 ## Project layout
 
 ```
+src/app/            Screens (Expo Router): lookup, flight, questions, verdict
+src/components/     UI building blocks and the route arc
 src/rules/          Rules engine (pure TypeScript, no React)
   types.ts          Inputs and verdict types
   config.ts         Versioned thresholds and amounts
   engine.ts         Scope → disruption → amount → verdict
   geo.ts            Regions and great-circle distance
   reference.ts      Airports and airline licences
+src/services/       Flight lookup + AeroDataBox normalizer (shared with the Worker)
 src/data/           Sample flights for demo mode
-tests/              Vitest suite for the engine
-App.tsx             Preview screen
+worker/             Cloudflare Worker that holds the API key and caches lookups
+tests/              Vitest suite
 ```
+
+## Architecture
+
+```
+App ──► Cloudflare Worker ──► AeroDataBox (flight status)
+ │        (holds API key, caches 24h, returns normalized FlightFacts)
+ │
+ └──► Rules engine (on device, deterministic) ──► Verdict with cited steps
+```
+
+The app never holds the flight-data API key, so the repository can stay public. Sample flight numbers resolve on-device, so the demo works offline.
 
 ## Run it
 
@@ -68,7 +82,20 @@ npm test          # runs the rules-engine tests
 npx expo start    # then press "a" to open on an Android emulator
 ```
 
-No API key is needed: the app runs on built-in sample flights. Copy `.env.example` to `.env` to connect live flight data once the proxy is deployed.
+No API key is needed: the app runs on built-in sample flights (try `LH 764` or tap a sample).
+
+### Live flight data (optional)
+
+1. Subscribe to the free AeroDataBox plan on RapidAPI and copy your key.
+2. Deploy the proxy:
+   ```bash
+   cd worker
+   npm install
+   npx wrangler login
+   npx wrangler secret put RAPIDAPI_KEY
+   npx wrangler deploy
+   ```
+3. Copy `.env.example` to `.env` and set `EXPO_PUBLIC_FLIGHT_PROXY_URL` to the URL wrangler printed. Restart `npx expo start`.
 
 ## Sample flights
 

@@ -1,0 +1,6 @@
+name = "refunddrop-flights"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+# The AeroDataBox key is a secret, never stored in this file:
+#   npx wrangler secret put RAPIDAPI_KEY
