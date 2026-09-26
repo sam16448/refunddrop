@@ -21,7 +21,8 @@ const STEPS: { icon: keyof typeof Ionicons.glyphMap; title: string; body: string
 export default function IntroScreen() {
   const done = () => {
     AsyncStorage.setItem(INTRO_SEEN_KEY, '1').catch(() => {});
-    router.replace('/');
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
   };
 
   return (

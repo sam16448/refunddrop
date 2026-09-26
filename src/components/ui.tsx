@@ -9,7 +9,18 @@ import { C, F, R, S, T } from '@/theme';
 type IconName = keyof typeof Ionicons.glyphMap;
 
 /** Page shell: navy background with a soft glow at the top, scrollable body, optional sticky footer. */
-export function Screen({ children, footer, glow = true }: { children: ReactNode; footer?: ReactNode; glow?: boolean }) {
+export function Screen({
+  children,
+  footer,
+  glow = true,
+  tab = false,
+}: {
+  children: ReactNode;
+  footer?: ReactNode;
+  glow?: boolean;
+  /** Inside the tab bar: the tab bar already handles the bottom safe area. */
+  tab?: boolean;
+}) {
   return (
     <View style={styles.root}>
       {glow ? (
@@ -21,7 +32,7 @@ export function Screen({ children, footer, glow = true }: { children: ReactNode;
           pointerEvents="none"
         />
       ) : null}
-      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <SafeAreaView style={styles.safe} edges={tab ? ['top'] : ['top', 'bottom']}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {children}
         </ScrollView>
@@ -161,6 +172,76 @@ export function BackBar({ onBack, title, right }: { onBack: () => void; title?: 
   );
 }
 
+/** Large page title used at the top of each tab. */
+export function PageHeader({ title, sub, right }: { title: string; sub?: string; right?: ReactNode }) {
+  return (
+    <View style={styles.pageHeader}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.pageTitle}>{title}</Text>
+        {sub ? <Text style={styles.pageSub}>{sub}</Text> : null}
+      </View>
+      {right}
+    </View>
+  );
+}
+
+/** Pill-shaped segmented control. */
+export function Segmented<V extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: V; label: string }[];
+  value: V;
+  onChange: (v: V) => void;
+}) {
+  return (
+    <View style={styles.segmented} accessibilityRole="tablist">
+      {options.map((o) => {
+        const active = o.value === value;
+        return (
+          <Pressable
+            key={o.value}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
+            onPress={() => {
+              Haptics.selectionAsync().catch(() => {});
+              onChange(o.value);
+            }}
+            style={[styles.segment, active && styles.segmentActive]}
+          >
+            <Text style={[styles.segmentText, active && { color: C.accentInk }]} numberOfLines={1}>
+              {o.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/** Small statistic tile: label, big value, caption. */
+export function StatTile({ label, value, caption, color = C.text, icon }: { label: string; value: string; caption?: string; color?: string; icon?: IconName }) {
+  return (
+    <View style={styles.stat}>
+      <Text style={[T.label, { color: C.muted, fontSize: 10 }]} numberOfLines={1}>
+        {label}
+      </Text>
+      <Text style={[styles.statValue, { color }]} numberOfLines={1} adjustsFontSizeToFit>
+        {value}
+      </Text>
+      {caption ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+          {icon ? <Ionicons name={icon} size={12} color={C.muted} /> : null}
+          <Text style={styles.statCaption} numberOfLines={1}>
+            {caption}
+          </Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 /** Icon in a tinted rounded square. */
 export function IconBadge({ name, color = C.accent, bg = C.accentSoft, size = 20 }: { name: IconName; color?: string; bg?: string; size?: number }) {
   return (
@@ -209,5 +290,15 @@ const styles = StyleSheet.create({
   pillText: { fontSize: 12, fontFamily: F.semibold, letterSpacing: 0.2 },
   backBar: { flexDirection: 'row', alignItems: 'center', marginBottom: S.lg, gap: S.md },
   backButton: { width: 38, height: 38, borderRadius: 12, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
+  pageHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: S.md, marginTop: S.sm, marginBottom: S.lg },
+  pageTitle: { ...T.h1, color: C.text, fontSize: 32, lineHeight: 38 },
+  pageSub: { ...T.body, color: C.muted, marginTop: 2 },
+  segmented: { flexDirection: 'row', backgroundColor: C.surface, borderRadius: 999, padding: 4, borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
+  segment: { flex: 1, height: 38, borderRadius: 999, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
+  segmentActive: { backgroundColor: C.accent },
+  segmentText: { color: C.muted, fontFamily: F.bold, fontSize: 13 },
+  stat: { flex: 1, backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
+  statValue: { fontFamily: F.display, fontSize: 26, marginTop: 6 },
+  statCaption: { ...T.small, color: C.muted, fontSize: 12, flexShrink: 1 },
   iconBadge: { borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 });

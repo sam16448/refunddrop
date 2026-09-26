@@ -1,5 +1,5 @@
 import { Redirect, router } from 'expo-router';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { BoardingPassCard } from '@/components/BoardingPassCard';
 import { BackBar, Button, IconBadge, Screen } from '@/components/ui';
@@ -17,9 +17,11 @@ export default function FlightScreen() {
   let headline: string;
   let color: string;
   let note: string;
+  let label = 'Flight status';
   if (facts.status === 'cancelled') {
     headline = 'Your flight was cancelled';
     color = C.bad;
+    label = 'Cancellation';
     note = 'Short-notice cancellations can earn compensation on top of a refund.';
   } else if (arrDelay === undefined) {
     headline = facts.status === 'scheduled' ? 'This flight hasn’t landed yet' : 'Arrival time unknown';
@@ -28,6 +30,7 @@ export default function FlightScreen() {
   } else if (arrDelay >= 180) {
     headline = `Arrived ${formatDuration(arrDelay)} late`;
     color = C.accent;
+    label = 'Long delay';
     note = 'Over 3 hours late at arrival — this is where compensation can start.';
   } else if (arrDelay >= 15) {
     headline = `Arrived ${formatDuration(arrDelay)} late`;
@@ -41,9 +44,13 @@ export default function FlightScreen() {
 
   return (
     <Screen footer={<Button title="Continue" icon="arrow-forward" onPress={() => router.push('/questions')} />}>
-      <BackBar onBack={() => router.back()} title={source === 'sample' ? 'Sample flight' : 'Live flight data'} />
+      <BackBar onBack={() => router.back()} title={`Step 1 of 3 · ${source === 'sample' ? 'Sample flight' : 'Live flight data'}`} />
 
-      <Animated.View entering={FadeInDown.duration(450)}>
+      <Animated.View entering={FadeInDown.duration(450)} style={styles.headCard}>
+        <View style={styles.labelRow}>
+          <View style={[styles.dot, { backgroundColor: color }]} />
+          <Text style={[styles.label, { color }]}>{label.toUpperCase()}</Text>
+        </View>
         <Text style={[styles.headline, { color }]}>{headline}</Text>
         <Text style={styles.note}>{note}</Text>
       </Animated.View>
@@ -73,7 +80,11 @@ export default function FlightScreen() {
 }
 
 const styles = StyleSheet.create({
-  headline: { ...T.h1, fontSize: 32, lineHeight: 38 },
+  headCard: { backgroundColor: C.surface, borderRadius: 20, padding: S.xl, borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: S.sm },
+  dot: { width: 7, height: 7, borderRadius: 4 },
+  label: { ...T.label, fontSize: 10.5 },
+  headline: { ...T.h1, fontSize: 30, lineHeight: 36 },
   note: { ...T.body, color: C.muted, marginTop: S.sm },
   scanned: { flexDirection: 'row', alignItems: 'center', gap: S.md, marginTop: S.lg, backgroundColor: C.surface, padding: S.md, borderRadius: 14 },
   scannedText: { ...T.small, color: C.muted, flex: 1 },

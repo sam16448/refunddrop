@@ -10,6 +10,7 @@ import { answersFor, effectiveFacts } from '@/lib/claim';
 import { evaluate, formatDuration, formatMoney, type Outcome, type StepStatus, type Verdict } from '@/rules';
 import { useClaim } from '@/state/claim';
 import { flightKey, useEntitlements } from '@/state/entitlements';
+import { useHistory } from '@/state/history';
 import { C, F, R, S, T } from '@/theme';
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -55,8 +56,9 @@ function shareText(v: Verdict, flight: string, route: string): string {
 }
 
 export default function VerdictScreen() {
-  const { facts, answers, experience, reset } = useClaim();
+  const { facts, answers, experience, reset, source, passenger } = useClaim();
   const { isUnlocked } = useEntitlements();
+  const { record } = useHistory();
   const verdict = useMemo(
     () => (facts ? evaluate(effectiveFacts(facts, experience), answersFor(experience, answers)) : undefined),
     [facts, answers, experience],
@@ -64,6 +66,14 @@ export default function VerdictScreen() {
   const est = verdict?.estimate;
   const amount = !est ? 0 : verdict?.outcome === 'possible' && !est.reduced ? est.fullAmount.amount : est.perPassenger.amount;
   const shown = useCountUp(verdict && (verdict.outcome === 'likely' || verdict.outcome === 'possible') ? amount : 0);
+
+  // Remember this check so it can be reopened from the Check tab.
+  useEffect(() => {
+    if (!facts || !verdict) return;
+    const e = verdict.estimate;
+    const money = e && (verdict.outcome === 'likely' || verdict.outcome === 'possible') ? formatMoney(verdict.outcome === 'possible' && !e.reduced ? e.fullAmount : e.perPassenger) : undefined;
+    record({ facts, source: source ?? 'live', answers, experience, passenger, outcome: verdict.outcome, amountText: money });
+  }, [facts, verdict, source, answers, experience, passenger, record]);
 
   useEffect(() => {
     if (verdict?.outcome === 'likely') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -155,8 +165,8 @@ export default function VerdictScreen() {
         </Animated.View>
       ) : null}
 
-      <SectionLabel>How we decided</SectionLabel>
-      <View>
+      <SectionLabel right={<Text style={styles.stepCount}>{verdict.steps.filter((x) => x.status !== 'info').length} checks</Text>}>How we decided</SectionLabel>
+      <View style={styles.stepsCard}>
         {verdict.steps.map((step, i) => (
           <Animated.View key={i} entering={FadeInDown.delay(250 + i * 70).duration(400)} style={styles.step}>
             <View style={styles.rail}>
@@ -166,7 +176,12 @@ export default function VerdictScreen() {
             <View style={styles.stepBody}>
               <Text style={styles.stepLabel}>{step.label}</Text>
               <Text style={styles.stepDetail}>{step.detail}</Text>
-              {step.ruleRef ? <Text style={styles.ruleRef}>{step.ruleRef}</Text> : null}
+              {step.ruleRef ? (
+                <View style={styles.ruleChip}>
+                  <Ionicons name="book-outline" size={11} color={C.info} />
+                  <Text style={styles.ruleRef}>{step.ruleRef}</Text>
+                </View>
+              ) : null}
             </View>
           </Animated.View>
         ))}
@@ -216,13 +231,16 @@ const styles = StyleSheet.create({
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: S.sm, marginTop: S.lg },
   keep: { flexDirection: 'row', gap: S.md, alignItems: 'center', marginTop: S.lg, backgroundColor: C.goodSoft, padding: S.lg, borderRadius: R.lg },
   keepText: { ...T.small, color: C.muted, flex: 1 },
+  stepCount: { color: C.faint, fontFamily: F.semibold, fontSize: 12 },
+  stepsCard: { backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, paddingBottom: S.xs, borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
   step: { flexDirection: 'row', gap: S.md },
   rail: { width: 22, alignItems: 'center', paddingTop: 2 },
   railLine: { flex: 1, width: 2, backgroundColor: C.line, marginTop: 4, marginBottom: -2, borderRadius: 1 },
   stepBody: { flex: 1, paddingBottom: S.lg },
   stepLabel: { color: C.text, fontSize: 15, fontFamily: F.bold },
   stepDetail: { ...T.small, color: C.muted, marginTop: 3 },
-  ruleRef: { color: C.info, fontSize: 11, fontFamily: F.semibold, marginTop: 5 },
+  ruleChip: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', backgroundColor: C.infoSoft, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 6 },
+  ruleRef: { color: C.info, fontSize: 11, fontFamily: F.semibold },
   box: { backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, gap: S.sm },
   bulletRow: { flexDirection: 'row', gap: S.sm, alignItems: 'flex-start' },
   bulletText: { ...T.small, color: C.text, flex: 1 },

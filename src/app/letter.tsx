@@ -1,20 +1,24 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, Text } from 'react-native';
+import { Linking, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { LetterView } from '@/components/LetterView';
-import { BackBar, Screen } from '@/components/ui';
-import { buildClaimLetter, buildEscalationLetter, buildFollowUpLetter, type Letter } from '@/claim/letters';
+import { BackBar, Button, Screen, Segmented } from '@/components/ui';
+import { buildClaimLetter, buildEscalationLetter, buildFollowUpLetter, enforcementBody, type Letter } from '@/claim/letters';
 import { evaluate } from '@/rules';
 import { todayIso, useClaims } from '@/state/claims';
-import { C, S, T } from '@/theme';
+import { C, F, R, S, T } from '@/theme';
 
-const TITLES: Record<Letter['kind'], string> = {
-  claim: 'Claim letter',
-  followup: 'Follow-up letter',
-  escalation: 'Escalation letter',
+type Kind = Letter['kind'];
+
+const NOTES: Record<Kind, { icon: keyof typeof Ionicons.glyphMap; text: string }> = {
+  claim: { icon: 'paper-plane-outline', text: 'Send this through the airline’s claim form or customer relations email. Attach your booking and boarding pass.' },
+  followup: { icon: 'repeat-outline', text: 'Send this if the airline hasn’t replied 14 days after your claim. It sets a clear deadline.' },
+  escalation: { icon: 'megaphone-outline', text: 'Send this to the enforcement body with copies of your booking, claim, follow-up and any reply. It’s free.' },
 };
 
 export default function LetterScreen() {
-  const { id, kind } = useLocalSearchParams<{ id: string; kind: Letter['kind'] }>();
+  const { id, kind = 'claim' } = useLocalSearchParams<{ id: string; kind?: Kind }>();
   const { claims, loaded } = useClaims();
   const claim = claims.find((c) => c.id === id);
   if (!loaded) return null;
@@ -28,21 +32,58 @@ export default function LetterScreen() {
       : kind === 'escalation'
         ? buildEscalationLetter(verdict, claim.facts, claim.details, sentOn)
         : buildClaimLetter(verdict, claim.facts, claim.answers, claim.details);
+  const carrier = claim.facts.operatingCarrier;
+  const note = NOTES[letter.kind];
 
   return (
-    <Screen>
-      <BackBar onBack={() => router.back()} title={TITLES[letter.kind]} />
-      {letter.kind === 'escalation' ? (
-        <Text style={styles.note}>
-          Send this with copies of your booking, your claim, the follow-up and any reply. Enforcement bodies can push the
-          airline to pay.
-        </Text>
-      ) : null}
-      <LetterView letter={letter} />
+    <Screen
+      footer={
+        letter.kind === 'claim' ? (
+          <Button
+            title={carrier.claimUrl ? `Open ${carrier.name} claim page` : `Find ${carrier.name}’s claim form`}
+            icon="open-outline"
+            variant="ghost"
+            onPress={() =>
+              Linking.openURL(
+                carrier.claimUrl ?? `https://www.google.com/search?q=${encodeURIComponent(`${carrier.name} compensation claim form`)}`,
+              ).catch(() => {})
+            }
+          />
+        ) : undefined
+      }
+    >
+      <BackBar onBack={() => router.back()} title={`${claim.facts.flightNumber} · ${claim.facts.origin.iata} → ${claim.facts.destination.iata}`} />
+      <Text style={styles.title}>Your letters</Text>
+      <View style={{ marginTop: S.lg }}>
+        <Segmented
+          options={[
+            { value: 'claim', label: 'Claim' },
+            { value: 'followup', label: 'Follow-up' },
+            { value: 'escalation', label: 'Escalation' },
+          ]}
+          value={letter.kind}
+          onChange={(k) => router.setParams({ kind: k })}
+        />
+      </View>
+
+      <Animated.View key={letter.kind} entering={FadeIn.duration(250)}>
+        <View style={styles.note}>
+          <Ionicons name={note.icon} size={16} color={C.info} />
+          <Text style={styles.noteText}>
+            {note.text}
+            {letter.kind === 'escalation' ? (
+              <Text style={{ fontFamily: F.bold, color: C.text }}>{`\nSend to: ${enforcementBody(verdict, claim.facts)}`}</Text>
+            ) : null}
+          </Text>
+        </View>
+        <LetterView letter={letter} />
+      </Animated.View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  note: { ...T.small, color: C.muted, marginBottom: S.md },
+  title: { ...T.h1, color: C.text },
+  note: { flexDirection: 'row', gap: S.sm, alignItems: 'flex-start', backgroundColor: C.infoSoft, padding: S.md, borderRadius: R.md, marginVertical: S.lg },
+  noteText: { ...T.small, color: C.info, flex: 1 },
 });

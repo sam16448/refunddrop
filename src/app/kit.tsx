@@ -8,7 +8,9 @@ import { buildClaimLetter, type ClaimDetails } from '@/claim/letters';
 import { answersFor, effectiveFacts } from '@/lib/claim';
 import { evaluate, formatMoney } from '@/rules';
 import { useClaim } from '@/state/claim';
-import { useClaims } from '@/state/claims';
+import { goToTab } from '@/lib/nav';
+import { scheduleFollowUp } from '@/services/reminders';
+import { todayIso, useClaims } from '@/state/claims';
 import { flightKey, useEntitlements } from '@/state/entitlements';
 import { C, F, R, S, T } from '@/theme';
 
@@ -46,7 +48,7 @@ function Field({
 
 export default function KitScreen() {
   const { facts, answers, experience, passenger } = useClaim();
-  const { add } = useClaims();
+  const { add, update } = useClaims();
   const ent = useEntitlements();
   const [name, setName] = useState(passenger?.name ?? '');
   const [others, setOthers] = useState('');
@@ -72,7 +74,7 @@ export default function KitScreen() {
     ? formatMoney({ amount: verdict.estimate.perPassenger.amount * n, currency: verdict.estimate.perPassenger.currency })
     : undefined;
 
-  const save = () => {
+  const save = async (sent: boolean) => {
     const saved = add({
       facts: effFacts,
       answers: effAnswers,
@@ -80,11 +82,24 @@ export default function KitScreen() {
       details,
       summary: { regime: verdict.regime, outcome: verdict.outcome, amountText: total },
     });
-    router.replace({ pathname: '/claims', params: { highlight: saved.id } });
+    goToTab({ pathname: '/claims', params: { highlight: saved.id } });
+    if (sent) {
+      const sentOn = todayIso();
+      update(saved.id, { status: 'sent', sentOn });
+      const reminderId = await scheduleFollowUp(saved, sentOn);
+      if (reminderId) update(saved.id, { reminderId });
+    }
   };
 
   return (
-    <Screen footer={<Button title="Save to my claims" icon="bookmark" onPress={save} disabled={!name.trim()} />}>
+    <Screen
+      footer={
+        <View style={{ gap: S.sm }}>
+          <Button title="I’ve sent it — remind me in 14 days" icon="paper-plane" onPress={() => save(true)} disabled={!name.trim()} />
+          <Button title="Save as draft" variant="subtle" icon="bookmark-outline" onPress={() => save(false)} disabled={!name.trim()} />
+        </View>
+      }
+    >
       <BackBar onBack={() => router.back()} title="Your Claim Kit" />
       <View style={styles.unlocked}>
         <Ionicons name="lock-open" size={14} color={C.good} />
@@ -129,7 +144,7 @@ export default function KitScreen() {
         {[
           { icon: 'attach' as const, t: 'Attach your booking confirmation and boarding pass (photos are fine).' },
           { icon: 'receipt-outline' as const, t: 'Keep receipts for meals, hotels or taxis — those are claimed separately.' },
-          { icon: 'notifications-outline' as const, t: 'Save the claim and mark it Sent — we’ll remind you to follow up after 14 days.' },
+          { icon: 'notifications-outline' as const, t: 'Sent it? Tap the button below — we’ll remind you to follow up if there’s no reply in 14 days.' },
         ].map((b) => (
           <View key={b.t} style={styles.bulletRow}>
             <Ionicons name={b.icon} size={16} color={C.accent} />

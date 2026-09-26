@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -52,30 +52,35 @@ export default function PaywallScreen() {
   const [selectedId, setSelectedId] = useState<string>();
   const [busy, setBusy] = useState(false);
 
-  if (!facts) return <Redirect href="/" />;
-  const key = flightKey(facts);
-  if (ent.isUnlocked(key)) return <Redirect href="/kit" />;
+  // Without a flight (opened from the You tab) only the subscription is offered:
+  // a Claim Kit is always bought for a specific flight.
+  const { plan } = useLocalSearchParams<{ plan?: string }>();
+  const key = facts && plan !== 'annual' ? flightKey(facts) : undefined;
+  if (key && ent.isUnlocked(key)) return <Redirect href="/kit" />;
 
-  const verdict = evaluate(effectiveFacts(facts, experience), answersFor(experience, answers));
-  const est = verdict.estimate;
+  const verdict = facts && key ? evaluate(effectiveFacts(facts, experience), answersFor(experience, answers)) : undefined;
+  const est = verdict?.estimate;
   const fee = est
     ? formatMoney({ amount: Math.round(est.perPassenger.amount * CLAIM_COMPANY_FEE), currency: est.perPassenger.currency })
     : undefined;
 
-  const kit = ent.plans.find((p) => p.kind === 'kit');
-  const annual = ent.plans.find((p) => p.kind === 'annual');
-  const selected = ent.plans.find((p) => p.id === selectedId) ?? kit ?? annual;
+  const plans = key ? ent.plans : ent.plans.filter((p) => p.kind === 'annual');
+  const kit = plans.find((p) => p.kind === 'kit');
+  const annual = plans.find((p) => p.kind === 'annual');
+  const selected = plans.find((p) => p.id === selectedId) ?? kit ?? annual;
+
+  const done = () => (key ? router.replace('/kit') : router.back());
 
   const useCredit = () => {
-    if (ent.unlock(key)) router.replace('/kit');
+    if (key && ent.unlock(key)) router.replace('/kit');
   };
 
   const onBuy = async () => {
     if (!selected) return;
     setBusy(true);
-    const result = await ent.purchase(selected, key);
+    const result = await ent.purchase(selected, key ?? '');
     setBusy(false);
-    if (result === 'unlocked') router.replace('/kit');
+    if (result === 'unlocked') done();
     else if (result === 'error') Alert.alert('Purchase not completed', 'Nothing was charged. Please try again.');
   };
 
@@ -92,11 +97,11 @@ export default function PaywallScreen() {
   return (
     <Screen
       footer={
-        ent.credits > 0 ? (
+        key && ent.credits > 0 ? (
           <Button title={`Use 1 of ${ent.credits} Claim Kit credit${ent.credits > 1 ? 's' : ''}`} icon="ticket" onPress={useCredit} />
         ) : (
           <Button
-            title={selected ? `Unlock for ${selected.priceString}` : 'Unlock Claim Kit'}
+            title={!selected ? 'Unlock Claim Kit' : selected.kind === 'annual' ? `Start Frequent Flyer · ${selected.priceString}/yr` : `Unlock for ${selected.priceString}`}
             icon="lock-open"
             onPress={onBuy}
             loading={busy}
@@ -105,11 +110,13 @@ export default function PaywallScreen() {
         )
       }
     >
-      <BackBar onBack={() => router.back()} title="Claim Kit" />
+      <BackBar onBack={() => router.back()} title={key ? 'Claim Kit' : 'Plans'} />
 
       <Animated.View entering={FadeInDown.duration(450)}>
-        <Text style={styles.title}>Keep all of it.</Text>
-        <Text style={styles.sub}>The check is free. Pay once for the part that gets you paid.</Text>
+        <Text style={styles.title}>{key ? 'Keep all of it.' : 'Frequent Flyer'}</Text>
+        <Text style={styles.sub}>
+          {key ? 'The check is free. Pay once for the part that gets you paid.' : 'Claim Kits for every disrupted flight this year, for less than one claim company fee.'}
+        </Text>
       </Animated.View>
 
       {est && fee ? (
@@ -142,10 +149,10 @@ export default function PaywallScreen() {
       <Animated.View entering={FadeInDown.delay(260).duration(450)} style={{ marginTop: S.xl, gap: S.sm }}>
         {!ent.ready ? (
           <ActivityIndicator color={C.accent} />
-        ) : ent.plans.length === 0 ? (
+        ) : plans.length === 0 ? (
           <Text style={styles.sub}>Plans are unavailable right now. Check your connection and try again.</Text>
         ) : (
-          ent.plans.map((p) => (
+          plans.map((p) => (
             <PlanCard key={p.id} plan={p} selected={selected?.id === p.id} onPress={() => setSelectedId(p.id)} />
           ))
         )}
@@ -167,7 +174,7 @@ export default function PaywallScreen() {
       </Pressable>
       <Text style={styles.fine}>
         RefundDrop provides information and letter templates, not legal advice or representation. The annual plan renews
-        unless cancelled in your store settings. See About for terms and privacy.
+        unless cancelled in your store settings. See the You tab for terms and privacy.
       </Text>
     </Screen>
   );

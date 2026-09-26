@@ -14,6 +14,18 @@ Scan your boarding pass. RefundDrop pulls your flight's real arrival time, appli
 
 Airlines owe passengers €250–€600 for long delays, short-notice cancellations and overbooking on European flights, yet most eligible passengers never claim. The ones who do usually go through claim companies that keep around a third of the money. The eligibility check itself is simple once the rules are encoded — so RefundDrop gives the check away and charges a small, flat fee for the part that actually saves people money: a claim that cites the right rules and a process that doesn't give up after one email.
 
+## The app
+
+Five tabs, built around what a disrupted traveller actually needs:
+
+| Tab | What it's for |
+| --- | --- |
+| **Check** | Scan a boarding pass or enter a flight; recent checks and a live "being claimed / received" total |
+| **Claims** | Wallet of every claim with a Drafted → Sent → Replied → Paid stepper, follow-up reminders and next actions |
+| **Scan** | Big centre button that opens the boarding-pass scanner from anywhere |
+| **Rights** | Offline guide: an at-the-airport checklist, care you're owed while waiting, amounts by distance, what the airline can't blame, time limits, official sources |
+| **You** | Plan and credits, restore purchases, reminder permission, privacy, how verdicts are made |
+
 ## What it does
 
 | Step | What happens |
@@ -23,7 +35,7 @@ Airlines owe passengers €250–€600 for long delays, short-notice cancellati
 | **Ask** | Only what data can't know: connections, the cause the airline gave, cancellation notice, replacement flight, overbooking |
 | **Verdict** | *Likely*, *possibly*, *refund only*, *not eligible* or *not covered* — with every rule it applied, what's still unconfirmed, and other rights (meals, hotels, refunds) |
 | **Claim Kit** | Claim letter, day-14 follow-up and escalation to the right national enforcement body; copy, share or PDF |
-| **Track** | On-device tracker: Drafted → Sent → Replied → Paid, with a real day-14 follow-up notification |
+| **Track** | On-device claim wallet: Drafted → Sent → Replied → Paid, totals, and a real day-14 follow-up notification |
 
 ## Monetization (RevenueCat)
 
@@ -84,8 +96,8 @@ The app never holds the flight-data API key, so the repository can stay public. 
 ## Project layout
 
 ```
-src/app/            Screens (Expo Router): intro, lookup, scan, flight, questions,
-                    verdict, paywall, kit, claims, letter, about
+src/app/(tabs)/     Tabs (Expo Router): Check, Claims, Scan, Rights, You
+src/app/            Flow screens: intro, scan, flight, questions, verdict, paywall, kit, letter
 src/rules/          Rules engine (pure TypeScript, no React)
   types.ts          Inputs and verdict types
   config.ts         Versioned thresholds and amounts
@@ -97,7 +109,7 @@ src/services/       Flight lookup, AeroDataBox normalizer, boarding-pass parser,
 src/state/          Flow state, claim tracker, entitlements
 src/data/           Sample flights and sample boarding pass
 worker/             Cloudflare Worker proxy
-tests/              Vitest suite (75 tests)
+tests/              Vitest suite (78 tests)
 docs/               Sample boarding pass for demos
 ```
 
@@ -109,7 +121,7 @@ You need [Node.js LTS](https://nodejs.org) and [Git](https://git-scm.com).
 git clone https://github.com/sam16448/refunddrop.git
 cd refunddrop
 npm install
-npm test            # 75 tests: rules engine, letters, boarding passes, API normalizer
+npm test            # 78 tests: rules engine, letters, boarding passes, API normalizer, claim wallet
 npx expo start      # opens in Expo Go (purchases run in RevenueCat preview mode)
 ```
 

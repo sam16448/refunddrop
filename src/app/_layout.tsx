@@ -2,15 +2,17 @@ import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, In
 import { SpaceGrotesk_500Medium, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
-import { DarkTheme, Stack, ThemeProvider, router, type ErrorBoundaryProps } from 'expo-router';
+import { DarkTheme, Stack, ThemeProvider, type ErrorBoundaryProps } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { goToTab } from '@/lib/nav';
 import { ClaimProvider } from '@/state/claim';
 import { ClaimsProvider } from '@/state/claims';
 import { EntitlementsProvider } from '@/state/entitlements';
+import { HistoryProvider } from '@/state/history';
 import { C, F, S } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -54,7 +56,7 @@ export default function RootLayout() {
 
   // Tapping a follow-up reminder opens the claims tracker.
   useEffect(() => {
-    const sub = Notifications.addNotificationResponseReceivedListener(() => router.push('/claims'));
+    const sub = Notifications.addNotificationResponseReceivedListener(() => goToTab('/claims'));
     return () => sub.remove();
   }, []);
 
@@ -65,19 +67,23 @@ export default function RootLayout() {
       <ThemeProvider value={theme}>
         <EntitlementsProvider>
           <ClaimsProvider>
-            <ClaimProvider>
-              <StatusBar style="light" />
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: C.bg },
-                  animation: 'slide_from_right',
-                }}
-              >
-                <Stack.Screen name="scan" options={{ animation: 'slide_from_bottom', presentation: 'fullScreenModal' }} />
-                <Stack.Screen name="paywall" options={{ animation: 'slide_from_bottom' }} />
-              </Stack>
-            </ClaimProvider>
+            <HistoryProvider>
+              <ClaimProvider>
+                <StatusBar style="light" />
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: C.bg },
+                    animation: 'slide_from_right',
+                  }}
+                >
+                  <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+                  <Stack.Screen name="intro" options={{ animation: 'fade' }} />
+                  <Stack.Screen name="scan" options={{ animation: 'slide_from_bottom', presentation: 'fullScreenModal' }} />
+                  <Stack.Screen name="paywall" options={{ animation: 'slide_from_bottom' }} />
+                </Stack>
+              </ClaimProvider>
+            </HistoryProvider>
           </ClaimsProvider>
         </EntitlementsProvider>
       </ThemeProvider>
