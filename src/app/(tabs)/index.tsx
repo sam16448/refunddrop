@@ -1,25 +1,26 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { DateField } from '@/components/DateField';
-import { Button, Card, Screen, SectionLabel, StatTile } from '@/components/ui';
+import { Button, HeaderButton, IconBadge, Logo, Screen, SectionLabel, Tag } from '@/components/ui';
 import { SAMPLE_FLIGHTS, type SampleFlight } from '@/data/sampleFlights';
 import { isValidDate, isValidFlightNumber, localTime } from '@/lib/format';
-import { walletTotals } from '@/lib/money';
+import { agencySavings, claimValue, walletTotals } from '@/lib/money';
 import { goToTab } from '@/lib/nav';
-import { INTRO_SEEN_KEY } from '@/lib/storageKeys';
 import { OUTCOME_CHIP } from '@/lib/outcome';
-import type { FlightFacts } from '@/rules';
+import { INTRO_SEEN_KEY } from '@/lib/storageKeys';
+import { evaluate, formatMoney, type FlightFacts } from '@/rules';
 import { liveLookupEnabled, lookupFlight } from '@/services/flightLookup';
 import { useClaim } from '@/state/claim';
-import { useClaims } from '@/state/claims';
+import { useClaims, type ClaimStatus, type SavedClaim } from '@/state/claims';
 import { useEntitlements } from '@/state/entitlements';
 import { useHistory, type RecentCheck } from '@/state/history';
-import { C, F, R, S, T } from '@/theme';
+import { C, F, GOLD_GLOW, R, S, SHADOW, T } from '@/theme';
+
+type IconName = keyof typeof Ionicons.glyphMap;
 
 function yesterdayLocal(): string {
   const d = new Date();
@@ -27,34 +28,57 @@ function yesterdayLocal(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+const CLAIM_STATUS: Record<ClaimStatus, { tag: string; tone: 'gold' | 'blue' | 'green' | 'red'; caption: string; icon: IconName }> = {
+  drafted: { tag: 'Ready to send', tone: 'gold', caption: 'Letter ready', icon: 'paper-plane-outline' },
+  sent: { tag: 'Submitted', tone: 'blue', caption: 'Awaiting airline', icon: 'time-outline' },
+  replied: { tag: 'Airline replied', tone: 'blue', caption: 'Check the reply', icon: 'mail-open-outline' },
+  rejected: { tag: 'Rejected', tone: 'red', caption: 'Escalate for free', icon: 'megaphone-outline' },
+  paid: { tag: 'Paid', tone: 'green', caption: 'Completed', icon: 'checkmark-circle' },
+};
 
-/** Decorative barcode drawn with bars, so no image asset is needed. */
-function Barcode() {
-  const widths = [3, 1, 2, 1, 3, 2, 1, 1, 3, 1, 2, 3, 1, 2, 1, 3, 1, 1, 2, 3, 1, 2];
+/** What each sample flight is worth, worked out by the real rules engine. */
+function sampleBadge(s: SampleFlight): { text: string; money: boolean } {
+  const v = evaluate(s.facts, s.demoAnswers);
+  if (v.estimate && (v.outcome === 'likely' || v.outcome === 'possible')) return { text: formatMoney(v.estimate.perPassenger), money: true };
+  return { text: OUTCOME_CHIP[v.outcome].label, money: false };
+}
+
+function ClaimRow({ claim }: { claim: SavedClaim }) {
+  const st = CLAIM_STATUS[claim.status];
+  const value = claimValue(claim);
+  const paid = claim.status === 'paid';
   return (
-    <View style={styles.barcode}>
-      {widths.map((w, i) => (
-        <View key={i} style={{ width: w * 1.6, height: 26, backgroundColor: i % 5 === 2 ? C.accent : C.text, opacity: 0.9 }} />
-      ))}
-      <View style={styles.laser} />
-    </View>
+    <Pressable onPress={() => goToTab('/claims')} style={({ pressed }) => [styles.claimRow, pressed && { opacity: 0.8 }]} accessibilityRole="button">
+      <IconBadge name={paid ? 'checkmark-done' : 'airplane'} color={paid ? C.good : C.blue} bg={paid ? C.goodSoft : C.accentSoft} />
+      <View style={{ flex: 1 }}>
+        <Text style={styles.claimTitle} numberOfLines={1}>
+          {claim.facts.operatingCarrier.name} {claim.facts.flightNumber}
+        </Text>
+        <Text style={styles.claimSub} numberOfLines={1}>
+          {claim.facts.origin.iata} → {claim.facts.destination.iata}
+        </Text>
+        <Tag text={st.tag} tone={st.tone} style={{ marginTop: 6 }} />
+      </View>
+      <View style={{ alignItems: 'flex-end' }}>
+        {value ? <Text style={[styles.claimAmount, paid && { color: C.good }]}>{formatMoney(value)}</Text> : null}
+        <Text style={styles.claimCaption}>{st.caption}</Text>
+      </View>
+    </Pressable>
   );
 }
 
 function RecentRow({ r, onPress }: { r: RecentCheck; onPress: () => void }) {
   const chip = OUTCOME_CHIP[r.outcome];
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.row, pressed && { opacity: 0.75 }]} accessibilityRole="button">
-      <View style={styles.routeChip}>
-        <Text style={styles.routeText}>{r.facts.origin.iata}</Text>
-        <Ionicons name="arrow-forward" size={11} color={C.faint} />
-        <Text style={styles.routeText}>{r.facts.destination.iata}</Text>
-      </View>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.claimRow, pressed && { opacity: 0.8 }]} accessibilityRole="button">
+      <IconBadge name="time-outline" />
       <View style={{ flex: 1 }}>
-        <Text style={styles.rowTitle}>{r.facts.flightNumber}</Text>
-        <Text style={[styles.rowSub, { color: chip.color }]}>{chip.label}</Text>
+        <Text style={styles.claimTitle}>{r.facts.flightNumber}</Text>
+        <Text style={styles.claimSub}>
+          {r.facts.origin.iata} → {r.facts.destination.iata} · <Text style={{ color: chip.color, fontFamily: F.bold }}>{chip.label}</Text>
+        </Text>
       </View>
-      {r.amountText ? <Text style={styles.rowAmount}>{r.amountText}</Text> : null}
+      {r.amountText ? <Text style={styles.claimAmount}>{r.amountText}</Text> : null}
       <Ionicons name="chevron-forward" size={18} color={C.faint} />
     </Pressable>
   );
@@ -70,6 +94,7 @@ export default function CheckScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
   const [legs, setLegs] = useState<FlightFacts[]>();
+  const samples = useMemo(() => SAMPLE_FLIGHTS.map((s) => ({ s, badge: sampleBadge(s) })), []);
 
   useEffect(() => {
     AsyncStorage.getItem(INTRO_SEEN_KEY)
@@ -110,129 +135,189 @@ export default function CheckScreen() {
   };
 
   const wallet = walletTotals(claims);
-  const planLabel = ent.pro ? 'Frequent Flyer' : ent.credits > 0 ? `${ent.credits} Kit credit${ent.credits > 1 ? 's' : ''}` : 'Free';
+  const hasClaims = claims.length > 0;
+  const sortedClaims = [...claims].sort((a, b) => Number(a.status === 'paid') - Number(b.status === 'paid')).slice(0, 3);
+  const planLabel = ent.pro ? 'Frequent Flyer' : ent.credits > 0 ? `${ent.credits} Kit credit${ent.credits > 1 ? 's' : ''}` : 'Free plan';
+
+  const header = (
+    <View>
+      <View style={styles.topRow}>
+        <Logo sub="Flight compensation" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: S.sm }}>
+          <Pressable onPress={() => goToTab(hasClaims ? '/claims' : '/you')} style={styles.walletPill} hitSlop={6} accessibilityRole="button">
+            <Ionicons name={hasClaims ? 'cash-outline' : ent.pro ? 'star' : 'sparkles-outline'} size={16} color={C.gold} />
+            <Text style={styles.walletPillText} numberOfLines={1}>
+              {hasClaims ? wallet.open : planLabel}
+            </Text>
+          </Pressable>
+          <HeaderButton icon="person-outline" label="Profile" onPress={() => goToTab('/you')} />
+        </View>
+      </View>
+      <Text style={styles.hero}>
+        Flight delayed or cancelled?{'\n'}
+        <Text style={{ color: C.gold }}>Get what you’re owed.</Text>
+      </Text>
+    </View>
+  );
 
   return (
-    <Screen tab>
-      <View style={styles.topRow}>
-        <View style={styles.brandRow}>
-          <Image source={require('../../../assets/icon.png')} style={styles.logo} />
-          <Text style={styles.brand}>RefundDrop</Text>
+    <Screen tab header={header} overlap={56}>
+      {/* Wallet */}
+      <Animated.View entering={FadeInDown.duration(450)} style={styles.card}>
+        <View style={styles.cardHead}>
+          <View style={styles.liveDot} />
+          <Text style={[T.label, { color: C.text, flex: 1, fontSize: 10.5 }]} numberOfLines={1}>
+            {hasClaims ? 'Your flight money' : 'What you could claim'}
+          </Text>
+          <Tag text="EU261 / UK261" tone="gold" icon="shield-checkmark" />
         </View>
-        <Pressable onPress={() => goToTab('/you')} style={styles.planPill} hitSlop={8} accessibilityLabel="Your plan">
-          <Ionicons name={ent.pro ? 'star' : 'person-circle-outline'} size={15} color={ent.pro ? C.accent : C.text} />
-          <Text style={styles.planText}>{planLabel}</Text>
-        </Pressable>
-      </View>
-
-      <Animated.View entering={FadeInDown.duration(450)}>
-        <Text style={styles.hero}>
-          Flight delayed or cancelled?{'\n'}
-          <Text style={{ color: C.accent }}>Get what you’re owed.</Text>
-        </Text>
-        <Text style={styles.sub}>Free check under EU, UK and US rules. Claim it yourself and keep 100%.</Text>
-      </Animated.View>
-
-      <Animated.View entering={FadeInDown.delay(80).duration(450)} style={{ marginTop: S.xl }}>
-        <Pressable
-          onPress={() => router.push('/scan')}
-          style={({ pressed }) => [pressed && { transform: [{ scale: 0.99 }], opacity: 0.95 }]}
-          accessibilityRole="button"
-          accessibilityLabel="Scan boarding pass"
-        >
-          <LinearGradient colors={['#2A2210', '#141B2C']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.scanCard}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={styles.fastest}>
-                <View style={styles.dot} />
-                <Text style={styles.fastestText}>FASTEST</Text>
-              </View>
-              <Barcode />
-            </View>
-            <Text style={styles.scanTitle}>Scan boarding pass</Text>
-            <Text style={styles.scanSub}>Paper or phone. Reads flight, date, name and booking reference, right on your phone.</Text>
-            <View style={styles.scanFoot}>
-              <Ionicons name="camera-outline" size={18} color={C.text} />
-              <Text style={styles.scanFootText}>Open scanner</Text>
-              <View style={styles.scanArrow}>
-                <Ionicons name="arrow-forward" size={16} color={C.accentInk} />
-              </View>
-            </View>
-          </LinearGradient>
-        </Pressable>
-      </Animated.View>
-
-      <Animated.View entering={FadeInDown.delay(140).duration(450)} style={styles.stats}>
-        {claims.length ? (
-          <>
-            <StatTile label="Being claimed" value={wallet.open} caption={`${wallet.openCount} open claim${wallet.openCount === 1 ? '' : 's'}`} color={C.accent} icon="time-outline" />
-            <StatTile label="Received" value={wallet.received} caption={`${wallet.paidCount} paid`} color={C.good} icon="checkmark-circle-outline" />
-          </>
-        ) : (
-          <>
-            <StatTile label="EU / UK delays" value="€600" caption="max per passenger" color={C.accent} icon="flash-outline" />
-            <StatTile label="Claim companies" value="−35%" caption="you keep 100%" color={C.bad} icon="shield-checkmark-outline" />
-          </>
-        )}
-      </Animated.View>
-
-      <Animated.View entering={FadeInDown.delay(200).duration(450)}>
-        <View style={styles.divider}>
-          <View style={styles.line} />
-          <Text style={styles.dividerText}>OR ENTER YOUR FLIGHT</Text>
-          <View style={styles.line} />
-        </View>
-        <Card>
-          <Text style={styles.inputLabel}>Flight number</Text>
-          <View style={styles.inputWrap}>
-            <Ionicons name="airplane" size={18} color={C.faint} />
-            <TextInput
-              value={number}
-              onChangeText={setNumber}
-              placeholder="e.g. LH 756"
-              placeholderTextColor={C.faint}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              style={styles.input}
-              returnKeyType="search"
-              onSubmitEditing={check}
-            />
+        <View style={styles.walletCols}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.colLabel}>{hasClaims ? 'Being claimed' : 'Up to'}</Text>
+            <Text style={[styles.colValue, { color: C.blue }]} numberOfLines={1} adjustsFontSizeToFit>
+              {hasClaims ? wallet.open : '€600'}
+            </Text>
+            <Text style={styles.colCaption}>
+              {hasClaims ? `${wallet.openCount} open claim${wallet.openCount === 1 ? '' : 's'}` : 'per passenger, EU & UK'}
+            </Text>
           </View>
-          <Text style={[styles.inputLabel, { marginTop: S.lg }]}>Departure date</Text>
-          <DateField value={date} onChange={setDate} />
-          {error ? (
-            <View style={styles.errorBox}>
-              <Ionicons name="alert-circle" size={16} color={C.bad} />
-              <Text style={styles.error}>{error}</Text>
-            </View>
-          ) : null}
+          <View style={{ flex: 1 }}>
+            <Text style={styles.colLabel}>{hasClaims ? 'Received' : 'You keep'}</Text>
+            <Text style={styles.colValue} numberOfLines={1} adjustsFontSizeToFit>
+              {hasClaims ? wallet.received : '100%'}
+            </Text>
+            <Text style={[styles.colCaption, { color: '#8A6D00', fontFamily: F.bold }]}>
+              {hasClaims ? `${wallet.paidCount} paid · 100% kept` : 'no commission'}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.savings}>
+          <View style={styles.coin}>
+            <Ionicons name="wallet" size={14} color={C.text} />
+          </View>
+          <Text style={styles.savingsText} numberOfLines={2}>
+            {hasClaims ? `${agencySavings(claims)} kept from claim companies` : 'Claim companies take ~35%. You don’t have to.'}
+          </Text>
+          <Tag text="0% fee" tone="blue" />
+        </View>
+      </Animated.View>
+
+      {/* Scan */}
+      <Animated.View entering={FadeInDown.delay(80).duration(450)}>
+        <Pressable onPress={() => router.push('/scan')} accessibilityRole="button" accessibilityLabel="Scan boarding pass" style={({ pressed }) => [styles.scanCard, pressed && { transform: [{ scale: 0.99 }] }]}>
+          <Ionicons name="qr-code" size={150} color="rgba(9,37,112,0.07)" style={styles.scanWatermark} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: S.sm }}>
+            <Tag text="Boarding pass scan" tone="white" icon="camera-outline" style={{ flexShrink: 1 }} />
+            <Tag text="Fastest" tone="navy" />
+          </View>
+          <Text style={styles.scanTitle}>Scan & check{'\n'}in seconds</Text>
+          <Text style={styles.scanSub}>Point your camera at the barcode on a paper or phone boarding pass.</Text>
           <View style={{ marginTop: S.lg }}>
-            <Button title="Check my flight" icon="search" onPress={check} loading={loading} />
+            <Button title="Open scanner" iconRight="arrow-forward" onPress={() => router.push('/scan')} />
           </View>
-          {!liveLookupEnabled ? <Text style={styles.note}>Live lookup is off in this build — sample flights work offline.</Text> : null}
-        </Card>
+        </Pressable>
+      </Animated.View>
 
-        {legs ? (
-          <>
-            <SectionLabel>Which flight were you on?</SectionLabel>
-            {legs.map((f, i) => (
-              <Pressable key={i} onPress={() => open(f, 'live')} style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.rowTitle}>
-                    {f.origin.iata} → {f.destination.iata}
-                  </Text>
-                  <Text style={styles.rowSub}>
-                    Departs {localTime(f.scheduledDepartureUtc, f.origin.tz)} · {f.origin.city} to {f.destination.city}
+      {/* Manual entry */}
+      <Animated.View entering={FadeInDown.delay(140).duration(450)} style={styles.card}>
+        <View style={[styles.cardHead, { marginBottom: S.lg }]}>
+          <Ionicons name="create-outline" size={20} color={C.blue} />
+          <Text style={styles.cardTitle}>Or enter your flight</Text>
+          <Tag text="Free check" tone="grey" />
+        </View>
+        <Text style={styles.inputLabel}>Flight number</Text>
+        <View style={styles.inputWrap}>
+          <Ionicons name="airplane" size={18} color={C.muted} />
+          <TextInput
+            value={number}
+            onChangeText={setNumber}
+            placeholder="e.g. LH 756"
+            placeholderTextColor={C.faint}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            style={styles.input}
+            returnKeyType="search"
+            onSubmitEditing={check}
+          />
+        </View>
+        <Text style={[styles.inputLabel, { marginTop: S.lg }]}>Departure date</Text>
+        <DateField value={date} onChange={setDate} />
+        {error ? (
+          <View style={styles.errorBox}>
+            <Ionicons name="alert-circle" size={16} color={C.bad} />
+            <Text style={styles.error}>{error}</Text>
+          </View>
+        ) : null}
+        <View style={{ marginTop: S.lg }}>
+          <Button title="Check flight eligibility" iconRight="shield-checkmark-outline" onPress={check} loading={loading} />
+        </View>
+        {!liveLookupEnabled ? <Text style={styles.note}>Live lookup is off in this build — sample flights work offline.</Text> : null}
+      </Animated.View>
+
+      {legs ? (
+        <>
+          <SectionLabel>Which flight were you on?</SectionLabel>
+          {legs.map((f, i) => (
+            <Pressable key={i} onPress={() => open(f, 'live')} style={({ pressed }) => [styles.claimRow, pressed && { opacity: 0.8 }]}>
+              <IconBadge name="airplane" />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.claimTitle}>
+                  {f.origin.iata} → {f.destination.iata}
+                </Text>
+                <Text style={styles.claimSub}>
+                  Departs {localTime(f.scheduledDepartureUtc, f.origin.tz)} · {f.origin.city} to {f.destination.city}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={C.faint} />
+            </Pressable>
+          ))}
+        </>
+      ) : null}
+
+      {/* Samples */}
+      <Animated.View entering={FadeInDown.delay(200).duration(450)}>
+        <SectionLabel right={<Text style={styles.link}>Tap to test</Text>}>Sample disruptions</SectionLabel>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: S.md, paddingHorizontal: S.lg, paddingBottom: S.md }}
+          style={{ marginHorizontal: -S.lg }}
+        >
+          {samples.map(({ s, badge }) => {
+            const cancelled = s.facts.status === 'cancelled';
+            return (
+              <Pressable key={s.id} onPress={() => openSample(s)} style={({ pressed }) => [styles.sample, pressed && { opacity: 0.8 }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: S.sm }}>
+                  <Text style={styles.sampleFlight}>{s.facts.flightNumber}</Text>
+                  <Tag text={badge.text} tone={badge.money ? 'gold' : 'grey'} />
+                </View>
+                <Text style={styles.sampleRoute}>
+                  {s.facts.origin.iata} → {s.facts.destination.iata}
+                </Text>
+                <View style={styles.sampleStatus}>
+                  <Ionicons name={cancelled ? 'close-circle-outline' : 'time-outline'} size={14} color={C.bad} />
+                  <Text style={styles.sampleStatusText} numberOfLines={2}>
+                    {s.subtitle}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color={C.muted} />
               </Pressable>
-            ))}
-          </>
-        ) : null}
+            );
+          })}
+        </ScrollView>
       </Animated.View>
 
-      {recent.length ? (
+      {/* Claims */}
+      {hasClaims ? (
         <Animated.View entering={FadeInDown.delay(240).duration(450)}>
+          <SectionLabel right={<Tag text={`${wallet.openCount} active`} tone="gold" />}>Your claims</SectionLabel>
+          {sortedClaims.map((c) => (
+            <ClaimRow key={c.id} claim={c} />
+          ))}
+        </Animated.View>
+      ) : null}
+
+      {recent.length ? (
+        <Animated.View entering={FadeInDown.delay(280).duration(450)}>
           <SectionLabel>Recent checks</SectionLabel>
           {recent.map((r) => (
             <RecentRow key={r.key} r={r} onPress={() => reopen(r)} />
@@ -240,66 +325,55 @@ export default function CheckScreen() {
         </Animated.View>
       ) : null}
 
-      <Animated.View entering={FadeInDown.delay(280).duration(450)}>
-        <SectionLabel>Try a sample flight</SectionLabel>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: S.sm, paddingRight: S.xl }} style={{ marginHorizontal: -S.xl, paddingLeft: S.xl }}>
-          {SAMPLE_FLIGHTS.map((s) => (
-            <Pressable key={s.id} onPress={() => openSample(s)} style={({ pressed }) => [styles.sample, pressed && { opacity: 0.75 }]}>
-              <Text style={styles.sampleRoute}>
-                {s.facts.origin.iata} → {s.facts.destination.iata}
-              </Text>
-              <Text style={styles.sampleFlight}>{s.facts.flightNumber}</Text>
-              <Text style={styles.sampleSub} numberOfLines={2}>
-                {s.subtitle}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-        <Text style={styles.footnote}>Samples use real routes with illustrative disruptions. Not legal advice.</Text>
-      </Animated.View>
+      <View style={styles.trust}>
+        <Ionicons name="shield-half-outline" size={22} color={C.blue} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.trustTitle}>Built on the actual rules</Text>
+          <Text style={styles.trustBody}>EU Regulation 261/2004, UK261 and US DOT refund rules. Samples are illustrative. Information, not legal advice.</Text>
+        </View>
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: S.xl },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: S.sm },
-  logo: { width: 34, height: 34, borderRadius: 10 },
-  brand: { color: C.text, fontSize: 19, fontFamily: F.display },
-  planPill: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 34, paddingHorizontal: 12, borderRadius: 999, backgroundColor: C.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
-  planText: { color: C.text, fontFamily: F.bold, fontSize: 12.5 },
-  hero: { fontFamily: F.display, color: C.text, fontSize: 32, lineHeight: 38, letterSpacing: -0.8 },
-  sub: { ...T.body, color: C.muted, marginTop: S.md },
-  scanCard: { borderRadius: R.xl, padding: S.xl, borderWidth: 1, borderColor: 'rgba(255,176,32,0.35)' },
-  fastest: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: 'rgba(0,0,0,0.3)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.accent },
-  fastestText: { color: C.accent, fontFamily: F.black, fontSize: 10, letterSpacing: 1.2 },
-  scanTitle: { color: C.text, fontFamily: F.display, fontSize: 24, marginTop: S.md },
-  scanSub: { ...T.small, color: C.muted, marginTop: S.xs },
-  barcode: { flexDirection: 'row', gap: 2, backgroundColor: '#0A0F1C', paddingHorizontal: 10, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: C.line, alignItems: 'center', overflow: 'hidden' },
-  laser: { position: 'absolute', left: 6, right: 6, top: '50%', height: 2, backgroundColor: C.accent, shadowColor: C.accent, shadowOpacity: 1, shadowRadius: 6 },
-  scanFoot: { flexDirection: 'row', alignItems: 'center', gap: S.sm, marginTop: S.lg, paddingTop: S.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(255,255,255,0.12)' },
-  scanFootText: { color: C.text, fontFamily: F.semibold, fontSize: 15, flex: 1 },
-  scanArrow: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' },
-  stats: { flexDirection: 'row', gap: S.md, marginTop: S.md },
-  divider: { flexDirection: 'row', alignItems: 'center', gap: S.md, marginTop: S.xl, marginBottom: S.lg },
-  line: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: C.line },
-  dividerText: { ...T.label, color: C.faint, fontSize: 10 },
-  inputLabel: { ...T.label, color: C.muted, marginBottom: S.sm },
-  inputWrap: { flexDirection: 'row', alignItems: 'center', gap: S.sm, backgroundColor: C.bg, borderRadius: R.md, borderWidth: 1, borderColor: C.line, paddingHorizontal: S.lg, height: 56 },
-  input: { flex: 1, color: C.text, fontSize: 22, fontFamily: F.display, letterSpacing: 1.5, height: '100%' },
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: S.sm },
+  walletPill: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 42, paddingHorizontal: 14, borderRadius: 999, backgroundColor: C.blueGlass, maxWidth: 150 },
+  walletPillText: { color: C.onBlue, fontFamily: F.black, fontSize: 14, flexShrink: 1 },
+  hero: { fontFamily: F.display, color: C.onBlue, fontSize: 28, lineHeight: 33, letterSpacing: -0.8, marginTop: S.xl },
+  card: { backgroundColor: C.surface, borderRadius: R.xl, padding: S.xl, marginBottom: S.lg, ...SHADOW },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: S.sm },
+  cardTitle: { flex: 1, color: C.text, fontFamily: F.black, fontSize: 17, letterSpacing: -0.3 },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.blue },
+  walletCols: { flexDirection: 'row', gap: S.lg, marginTop: S.lg },
+  colLabel: { color: C.text, fontFamily: F.bold, fontSize: 13 },
+  colValue: { fontFamily: F.display, color: C.text, fontSize: 32, letterSpacing: -1, marginTop: 2 },
+  colCaption: { ...T.small, color: C.muted, fontSize: 12 },
+  savings: { flexDirection: 'row', alignItems: 'center', gap: S.sm, backgroundColor: C.bg, borderRadius: R.md, padding: S.md, marginTop: S.lg },
+  coin: { width: 28, height: 28, borderRadius: 14, backgroundColor: C.gold, alignItems: 'center', justifyContent: 'center' },
+  savingsText: { flex: 1, color: C.text, fontFamily: F.bold, fontSize: 13 },
+  scanCard: { backgroundColor: C.gold, borderRadius: R.xl, padding: S.xl, marginBottom: S.lg, overflow: 'hidden', ...GOLD_GLOW },
+  scanWatermark: { position: 'absolute', right: -20, bottom: 50 },
+  scanTitle: { fontFamily: F.display, color: C.text, fontSize: 30, lineHeight: 34, letterSpacing: -0.9, marginTop: S.lg },
+  scanSub: { ...T.body, color: '#3B3200', marginTop: S.sm },
+  inputLabel: { ...T.label, color: C.text, marginBottom: S.sm },
+  inputWrap: { flexDirection: 'row', alignItems: 'center', gap: S.sm, backgroundColor: C.bg, borderRadius: R.md, paddingHorizontal: S.lg, height: 56 },
+  input: { flex: 1, color: C.text, fontSize: 20, fontFamily: F.black, letterSpacing: 1, height: '100%' },
   errorBox: { flexDirection: 'row', gap: 6, alignItems: 'flex-start', marginTop: S.md, backgroundColor: C.badSoft, padding: S.md, borderRadius: R.sm },
   error: { color: C.bad, flex: 1, ...T.small },
   note: { ...T.small, color: C.faint, marginTop: S.md, textAlign: 'center' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: S.md, backgroundColor: C.surface, borderRadius: R.md, padding: S.lg, marginBottom: S.sm, borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
-  routeChip: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: C.bg, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6 },
-  routeText: { fontFamily: F.display, color: C.text, fontSize: 13 },
-  rowTitle: { color: C.text, fontSize: 15, fontFamily: F.bold },
-  rowSub: { ...T.small, color: C.muted, marginTop: 1 },
-  rowAmount: { fontFamily: F.display, color: C.accent, fontSize: 17 },
-  sample: { width: 168, backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
-  sampleRoute: { fontFamily: F.display, color: C.accent, fontSize: 13, letterSpacing: 0.5 },
-  sampleFlight: { color: C.text, fontFamily: F.bold, fontSize: 16, marginTop: 4 },
-  sampleSub: { ...T.small, color: C.muted, marginTop: 2, fontSize: 12 },
-  footnote: { ...T.small, color: C.faint, marginTop: S.md, fontSize: 12 },
+  link: { color: C.blue, fontFamily: F.bold, fontSize: 13 },
+  sample: { width: 196, backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, ...SHADOW },
+  sampleFlight: { color: C.text, fontFamily: F.black, fontSize: 17 },
+  sampleRoute: { color: C.muted, fontFamily: F.semibold, fontSize: 13, marginTop: 4 },
+  sampleStatus: { flexDirection: 'row', alignItems: 'flex-start', gap: 4, marginTop: S.sm },
+  sampleStatusText: { color: C.bad, fontFamily: F.bold, fontSize: 12, flex: 1 },
+  claimRow: { flexDirection: 'row', alignItems: 'center', gap: S.md, backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, marginBottom: S.md, ...SHADOW },
+  claimTitle: { color: C.text, fontSize: 16, fontFamily: F.black, letterSpacing: -0.2 },
+  claimSub: { ...T.small, color: C.muted, marginTop: 1 },
+  claimAmount: { fontFamily: F.display, color: C.blue, fontSize: 19, letterSpacing: -0.4 },
+  claimCaption: { color: C.muted, fontFamily: F.semibold, fontSize: 12, marginTop: 2 },
+  trust: { flexDirection: 'row', gap: S.md, alignItems: 'center', backgroundColor: C.surfaceHi, borderRadius: R.lg, padding: S.lg, marginTop: S.xl },
+  trustTitle: { color: C.text, fontFamily: F.black, fontSize: 14 },
+  trustBody: { ...T.small, color: C.muted, fontSize: 12, marginTop: 2 },
 });

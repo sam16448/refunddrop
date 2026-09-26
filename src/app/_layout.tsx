@@ -1,8 +1,12 @@
-import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold } from '@expo-google-fonts/inter';
-import { SpaceGrotesk_500Medium, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
+import {
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  PlusJakartaSans_800ExtraBold,
+} from '@expo-google-fonts/plus-jakarta-sans';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
-import { DarkTheme, Stack, ThemeProvider, type ErrorBoundaryProps } from 'expo-router';
+import { DefaultTheme, Stack, ThemeProvider, type ErrorBoundaryProps } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -18,8 +22,8 @@ import { C, F, S } from '@/theme';
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const theme = {
-  ...DarkTheme,
-  colors: { ...DarkTheme.colors, background: C.bg, card: C.bg, text: C.text, border: C.line, primary: C.accent },
+  ...DefaultTheme,
+  colors: { ...DefaultTheme.colors, background: C.bg, card: C.bg, text: C.text, border: C.line, primary: C.accent },
 };
 
 /** Shown instead of a crash screen if any screen throws. */
@@ -40,13 +44,10 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
-    Inter_800ExtraBold,
-    SpaceGrotesk_500Medium,
-    SpaceGrotesk_700Bold,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
   });
   const ready = fontsLoaded || Boolean(fontError);
 
@@ -96,6 +97,6 @@ const styles = StyleSheet.create({
   errorTitle: { color: C.text, fontSize: 26, fontFamily: F.display },
   errorBody: { color: C.muted, fontSize: 15, lineHeight: 22 },
   errorDetail: { color: C.faint, fontSize: 12 },
-  errorButton: { marginTop: S.md, backgroundColor: C.accent, borderRadius: 14, height: 52, alignItems: 'center', justifyContent: 'center' },
+  errorButton: { marginTop: S.md, backgroundColor: C.accent, borderRadius: 999, height: 52, alignItems: 'center', justifyContent: 'center' },
   errorButtonText: { color: C.accentInk, fontSize: 16, fontWeight: '700' },
 });

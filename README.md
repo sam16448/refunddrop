@@ -11,11 +11,16 @@ Scan your boarding pass. RefundDrop pulls your flight's real arrival time, appli
 > Built for the RevenueCat **Shipaton 2026 Next Gen Award**.
 
 <p align="center">
-  <img src="docs/screenshots/01_check.png" width="19%" alt="Check tab"/>
-  <img src="docs/screenshots/05_verdict.png" width="19%" alt="Verdict"/>
-  <img src="docs/screenshots/06_paywall.png" width="19%" alt="RevenueCat paywall"/>
-  <img src="docs/screenshots/07_claims.png" width="19%" alt="Claims wallet"/>
-  <img src="docs/screenshots/09_rights.png" width="19%" alt="Rights guide"/>
+  <img src="docs/screenshots/00_welcome.png" width="24%" alt="Welcome"/>
+  <img src="docs/screenshots/01_check.png" width="24%" alt="Check tab"/>
+  <img src="docs/screenshots/02_scan.png" width="24%" alt="Boarding pass scanner"/>
+  <img src="docs/screenshots/05_verdict.png" width="24%" alt="Verdict"/>
+</p>
+<p align="center">
+  <img src="docs/screenshots/06_paywall.png" width="24%" alt="RevenueCat paywall"/>
+  <img src="docs/screenshots/07_claims.png" width="24%" alt="Claims wallet"/>
+  <img src="docs/screenshots/08_letter.png" width="24%" alt="Claim letters"/>
+  <img src="docs/screenshots/09_rights.png" width="24%" alt="Rights guide"/>
 </p>
 
 ## Why it exists

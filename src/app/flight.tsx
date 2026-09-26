@@ -2,10 +2,10 @@ import { Redirect, router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { BoardingPassCard } from '@/components/BoardingPassCard';
-import { BackBar, Button, IconBadge, Screen } from '@/components/ui';
+import { BackBar, Button, IconBadge, Screen, Tag } from '@/components/ui';
 import { formatDuration, minutesBetween } from '@/rules';
 import { useClaim } from '@/state/claim';
-import { C, F, S, T } from '@/theme';
+import { C, F, R, S, SHADOW, T } from '@/theme';
 
 export default function FlightScreen() {
   const { facts, source, passenger } = useClaim();
@@ -29,7 +29,7 @@ export default function FlightScreen() {
     note = 'You can still check — we’ll ask when you arrived.';
   } else if (arrDelay >= 180) {
     headline = `Arrived ${formatDuration(arrDelay)} late`;
-    color = C.accent;
+    color = C.blue;
     label = 'Long delay';
     note = 'Over 3 hours late at arrival — this is where compensation can start.';
   } else if (arrDelay >= 15) {
@@ -43,8 +43,20 @@ export default function FlightScreen() {
   }
 
   return (
-    <Screen footer={<Button title="Continue" icon="arrow-forward" onPress={() => router.push('/questions')} />}>
-      <BackBar onBack={() => router.back()} title={`Step 1 of 3 · ${source === 'sample' ? 'Sample flight' : 'Live flight data'}`} />
+    <Screen
+      overlap={44}
+      footer={<Button title="Continue" iconRight="arrow-forward" onPress={() => router.push('/questions')} />}
+      header={
+        <View>
+          <BackBar
+            onBack={() => router.back()}
+            title="Step 1 of 3"
+            right={<Tag text={source === 'sample' ? 'Sample flight' : 'Live data'} tone="glass" icon={source === 'sample' ? 'flask-outline' : 'radio-outline'} />}
+          />
+          <Text style={styles.headerTitle}>Here’s what happened</Text>
+        </View>
+      }
+    >
 
       <Animated.View entering={FadeInDown.duration(450)} style={styles.headCard}>
         <View style={styles.labelRow}>
@@ -80,13 +92,14 @@ export default function FlightScreen() {
 }
 
 const styles = StyleSheet.create({
-  headCard: { backgroundColor: C.surface, borderRadius: 20, padding: S.xl, borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
+  headerTitle: { fontFamily: F.display, color: C.onBlue, fontSize: 28, letterSpacing: -0.8, marginTop: S.lg },
+  headCard: { backgroundColor: C.surface, borderRadius: R.xl, padding: S.xl, ...SHADOW },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: S.sm },
   dot: { width: 7, height: 7, borderRadius: 4 },
   label: { ...T.label, fontSize: 10.5 },
-  headline: { ...T.h1, fontSize: 30, lineHeight: 36 },
+  headline: { ...T.h1, fontSize: 28, lineHeight: 34 },
   note: { ...T.body, color: C.muted, marginTop: S.sm },
-  scanned: { flexDirection: 'row', alignItems: 'center', gap: S.md, marginTop: S.lg, backgroundColor: C.surface, padding: S.md, borderRadius: 14 },
+  scanned: { flexDirection: 'row', alignItems: 'center', gap: S.md, marginTop: S.lg, backgroundColor: C.surface, padding: S.md, borderRadius: R.lg, ...SHADOW },
   scannedText: { ...T.small, color: C.muted, flex: 1 },
   small: { ...T.small, color: C.faint, marginTop: S.md },
 });

@@ -58,8 +58,9 @@ export function DateField({ value, onChange }: { value: string; onChange: (iso: 
         <Chip label={custom ? 'Other ✓' : 'Other…'} icon="calendar-outline" selected={custom} onPress={openCalendar} />
       </View>
       <Pressable onPress={openCalendar} style={styles.display} accessibilityRole="button" accessibilityLabel="Choose date">
-        <Ionicons name="calendar" size={18} color={C.accent} />
-        <Text style={styles.displayText}>{pretty(value)}</Text>
+        <Ionicons name="calendar-outline" size={19} color={C.muted} />
+        <Text style={[styles.displayText, { flex: 1 }]}>{pretty(value)}</Text>
+        <Ionicons name="chevron-down" size={18} color={C.faint} />
       </Pressable>
 
       {Platform.OS === 'ios' ? (
@@ -71,7 +72,7 @@ export function DateField({ value, onChange }: { value: string; onChange: (iso: 
               mode="date"
               display="inline"
               maximumDate={new Date()}
-              themeVariant="dark"
+              themeVariant="light"
               accentColor={C.accent}
               onChange={(_e, d) => d && setDraft(d)}
             />
@@ -98,12 +99,10 @@ const styles = StyleSheet.create({
     gap: S.sm,
     backgroundColor: C.bg,
     borderRadius: R.md,
-    borderWidth: 1,
-    borderColor: C.line,
     paddingHorizontal: S.lg,
-    height: 52,
+    height: 56,
   },
-  displayText: { color: C.text, fontFamily: F.semibold, fontSize: 16 },
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
+  displayText: { color: C.text, fontFamily: F.bold, fontSize: 16 },
+  backdrop: { flex: 1, backgroundColor: 'rgba(9,37,112,0.45)' },
   sheet: { backgroundColor: C.surface, padding: S.lg, paddingBottom: 40, borderTopLeftRadius: R.xl, borderTopRightRadius: R.xl, gap: S.md },
 });

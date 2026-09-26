@@ -51,20 +51,25 @@ export default function LetterScreen() {
           />
         ) : undefined
       }
-    >
-      <BackBar onBack={() => router.back()} title={`${claim.facts.flightNumber} · ${claim.facts.origin.iata} → ${claim.facts.destination.iata}`} />
-      <Text style={styles.title}>Your letters</Text>
-      <View style={{ marginTop: S.lg }}>
-        <Segmented
-          options={[
+      header={
+        <View>
+          <BackBar onBack={() => router.back()} title={`${claim.facts.flightNumber} · ${claim.facts.origin.iata} → ${claim.facts.destination.iata}`} />
+          <Text style={styles.title}>Your letters</Text>
+          <View style={{ marginTop: S.lg }}>
+            <Segmented
+              onBlue
+              options={[
             { value: 'claim', label: 'Claim' },
             { value: 'followup', label: 'Follow-up' },
-            { value: 'escalation', label: 'Escalation' },
-          ]}
-          value={letter.kind}
-          onChange={(k) => router.setParams({ kind: k })}
-        />
-      </View>
+                { value: 'escalation', label: 'Escalation' },
+              ]}
+              value={letter.kind}
+              onChange={(k) => router.setParams({ kind: k })}
+            />
+          </View>
+        </View>
+      }
+    >
 
       <Animated.View key={letter.kind} entering={FadeIn.duration(250)}>
         <View style={styles.note}>
@@ -83,7 +88,7 @@ export default function LetterScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { ...T.h1, color: C.text },
-  note: { flexDirection: 'row', gap: S.sm, alignItems: 'flex-start', backgroundColor: C.infoSoft, padding: S.md, borderRadius: R.md, marginVertical: S.lg },
+  title: { ...T.h1, color: C.onBlue, marginTop: S.lg },
+  note: { flexDirection: 'row', gap: S.sm, alignItems: 'flex-start', backgroundColor: C.infoSoft, padding: S.md, borderRadius: R.md, marginBottom: S.lg },
   noteText: { ...T.small, color: C.info, flex: 1 },
 });

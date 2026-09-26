@@ -1,19 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Application from 'expo-application';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Notifications from 'expo-notifications';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState, type ReactNode } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Button, PageHeader, Screen, SectionLabel, StatTile } from '@/components/ui';
+import { Button, LogoMark, PageHeader, Screen, SectionLabel, StatTile } from '@/components/ui';
 import { walletTotals } from '@/lib/money';
 import { INTRO_SEEN_KEY } from '@/lib/storageKeys';
 import { DISCLAIMER, EU261_V2004, UK261_V2021, US_DOT_2024 } from '@/rules';
 import { useClaims } from '@/state/claims';
 import { useEntitlements } from '@/state/entitlements';
 import { useHistory } from '@/state/history';
-import { C, F, R, S, T } from '@/theme';
+import { C, F, GOLD_GLOW, R, S, SHADOW, T } from '@/theme';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -21,7 +20,7 @@ function Row({ icon, title, sub, onPress, right, last }: { icon: IconName; title
   return (
     <Pressable onPress={onPress} disabled={!onPress} style={({ pressed }) => [styles.row, !last && styles.divider, pressed && onPress && { opacity: 0.7 }]}>
       <View style={styles.rowIcon}>
-        <Ionicons name={icon} size={18} color={C.accent} />
+        <Ionicons name={icon} size={18} color={C.blue} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.rowTitle}>{title}</Text>
@@ -61,13 +60,11 @@ export default function YouScreen() {
   const modeNote = ent.mode === 'preview' ? 'Expo Go preview — purchases unlock without charging' : ent.mode === 'demo' ? 'Demo mode — no RevenueCat key' : undefined;
 
   return (
-    <Screen tab>
-      <PageHeader title="You" sub="Your plan, reminders and privacy" />
-
-      <LinearGradient colors={ent.pro ? ['#3A2A08', '#141B2C'] : ['#1A2438', '#121A2B']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.plan, ent.pro && { borderColor: 'rgba(255,176,32,0.45)' }]}>
+    <Screen tab overlap={64} header={<PageHeader title="Profile" sub="Your plan, reminders and privacy" right={<LogoMark size={44} />} />}>
+      <View style={[styles.plan, ent.pro && styles.planPro]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: S.md }}>
-          <View style={[styles.planIcon, ent.pro && { backgroundColor: C.accent }]}>
-            <Ionicons name={ent.pro ? 'star' : 'airplane'} size={20} color={ent.pro ? C.accentInk : C.accent} />
+          <View style={[styles.planIcon, ent.pro && { backgroundColor: C.text }]}>
+            <Ionicons name={ent.pro ? 'star' : 'airplane'} size={20} color={ent.pro ? C.gold : C.blue} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.planLabel}>YOUR PLAN</Text>
@@ -89,11 +86,11 @@ export default function YouScreen() {
         </Text>
         {!ent.pro ? (
           <View style={{ marginTop: S.lg }}>
-            <Button title="See Frequent Flyer" icon="star" onPress={() => router.push({ pathname: '/paywall', params: { plan: 'annual' } })} />
+            <Button title="See Frequent Flyer" variant="gold" icon="star" iconRight="arrow-forward" onPress={() => router.push({ pathname: '/paywall', params: { plan: 'annual' } })} />
           </View>
         ) : null}
         {modeNote ? <Text style={styles.modeNote}>{modeNote}</Text> : null}
-      </LinearGradient>
+      </View>
 
       <View style={styles.stats}>
         <StatTile label="Claims" value={String(claims.length)} caption={`${wallet.paidCount} paid`} />
@@ -170,20 +167,21 @@ export default function YouScreen() {
 }
 
 const styles = StyleSheet.create({
-  plan: { borderRadius: R.xl, padding: S.xl, borderWidth: 1, borderColor: C.line },
-  planIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: C.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  plan: { borderRadius: R.xl, padding: S.xl, backgroundColor: C.surface, ...SHADOW },
+  planPro: { backgroundColor: C.gold, ...GOLD_GLOW },
+  planIcon: { width: 46, height: 46, borderRadius: 23, backgroundColor: C.accentSoft, alignItems: 'center', justifyContent: 'center' },
   planLabel: { ...T.label, color: C.muted, fontSize: 10 },
-  planName: { fontFamily: F.display, color: C.text, fontSize: 24, marginTop: 2 },
+  planName: { fontFamily: F.display, color: C.text, fontSize: 26, marginTop: 2, letterSpacing: -0.6 },
   planBody: { ...T.small, color: C.muted, marginTop: S.md },
   credit: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.goodSoft, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
   creditText: { color: C.good, fontFamily: F.bold, fontSize: 12 },
-  modeNote: { ...T.small, color: C.info, fontSize: 12, marginTop: S.md },
+  modeNote: { ...T.small, color: C.blue, fontFamily: F.semibold, fontSize: 12, marginTop: S.md, backgroundColor: C.accentSoft, padding: S.sm, borderRadius: R.sm, overflow: 'hidden' },
   stats: { flexDirection: 'row', gap: S.md, marginTop: S.md },
-  block: { backgroundColor: C.surface, borderRadius: R.lg, paddingHorizontal: S.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
+  block: { backgroundColor: C.surface, borderRadius: R.xl, paddingHorizontal: S.lg, ...SHADOW },
   divider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.line },
   row: { flexDirection: 'row', alignItems: 'center', gap: S.md, paddingVertical: S.md },
-  rowIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: C.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  rowTitle: { color: C.text, fontFamily: F.semibold, fontSize: 15 },
+  rowIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  rowTitle: { color: C.text, fontFamily: F.bold, fontSize: 15 },
   rowSub: { ...T.small, color: C.muted, marginTop: 2 },
   para: { ...T.small, color: C.muted, paddingVertical: S.lg },
   made: { ...T.small, color: C.faint, textAlign: 'center', marginTop: S.xl, fontSize: 12 },

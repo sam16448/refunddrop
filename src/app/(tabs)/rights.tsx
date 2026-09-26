@@ -7,7 +7,7 @@ import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Button, IconBadge, PageHeader, Screen, Segmented, SectionLabel } from '@/components/ui';
 import { EU261_V2004, UK261_V2021, US_DOT_2024 } from '@/rules';
-import { C, F, R, S, T } from '@/theme';
+import { C, F, GOLD_GLOW, R, S, SHADOW, T } from '@/theme';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 type Section = 'airport' | 'owed' | 'claim';
@@ -87,7 +87,7 @@ function AirportSection() {
   return (
     <Animated.View entering={FadeIn.duration(250)}>
       <View style={styles.banner}>
-        <IconBadge name="alert-circle" size={20} color={C.accentInk} bg={C.accent} />
+        <IconBadge name="alert-circle" size={20} color={C.gold} bg={C.text} />
         <View style={{ flex: 1 }}>
           <Text style={styles.bannerTitle}>Delayed right now?</Text>
           <Text style={styles.bannerBody}>Do these before you leave the airport. They make your claim much stronger.</Text>
@@ -106,7 +106,7 @@ function AirportSection() {
               accessibilityState={{ checked: on }}
               style={[styles.check, i < CHECKLIST.length - 1 && styles.divider]}
             >
-              <View style={[styles.box, on && styles.boxOn]}>{on ? <Ionicons name="checkmark" size={16} color={C.accentInk} /> : null}</View>
+              <View style={[styles.box, on && styles.boxOn]}>{on ? <Ionicons name="checkmark" size={16} color="#FFFFFF" /> : null}</View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.checkTitle, on && styles.checkDone]}>{c.title}</Text>
                 <Text style={styles.checkBody}>{c.body}</Text>
@@ -201,7 +201,7 @@ function OwedSection() {
 
       <SectionLabel>What the airline can’t blame</SectionLabel>
       <View style={styles.causes}>
-        <View style={[styles.causeCol, { borderColor: 'rgba(52,211,153,0.3)' }]}>
+        <View style={[styles.causeCol, { borderColor: 'rgba(16,185,129,0.35)' }]}>
           <Text style={[styles.causeHead, { color: C.good }]}>You’re still owed</Text>
           {CAUSES_OWED.map((c) => (
             <View key={c} style={styles.causeRow}>
@@ -244,7 +244,7 @@ function ClaimSection() {
       </Block>
 
       <View style={styles.compare}>
-        <Ionicons name="wallet" size={20} color={C.good} />
+        <Ionicons name="wallet" size={20} color={C.text} />
         <Text style={styles.compareText}>
           Claim companies usually keep 25–50% of what you get. The Claim Kit writes all three letters for a flat{' '}
           <Text style={styles.strong}>$4.99</Text>, so the rest is yours.
@@ -279,22 +279,29 @@ function ClaimSection() {
 export default function RightsScreen() {
   const [section, setSection] = useState<Section>('airport');
   return (
-    <Screen tab>
-      <PageHeader title="Your rights" sub="What airlines owe you. Works offline." />
-      <Animated.View entering={FadeInDown.duration(350)}>
-        <Segmented
-          options={[
-            { value: 'airport', label: 'At the airport' },
-            { value: 'owed', label: 'What you get' },
-            { value: 'claim', label: 'How to claim' },
-          ]}
-          value={section}
-          onChange={setSection}
-        />
-      </Animated.View>
+    <Screen
+      tab
+      header={
+        <View>
+          <PageHeader title="Your rights" sub="What airlines owe you. Works offline." />
+          <Animated.View entering={FadeInDown.duration(350)} style={{ marginTop: S.lg }}>
+            <Segmented
+              onBlue
+              options={[
+                { value: 'airport', label: 'At the airport' },
+                { value: 'owed', label: 'What you get' },
+                { value: 'claim', label: 'How to claim' },
+              ]}
+              value={section}
+              onChange={setSection}
+            />
+          </Animated.View>
+        </View>
+      }
+    >
       {section === 'airport' ? <AirportSection /> : section === 'owed' ? <OwedSection /> : <ClaimSection />}
       <View style={{ marginTop: S.xl }}>
-        <Button title="Check my flight" icon="airplane" variant="subtle" onPress={() => router.navigate('/')} />
+        <Button title="Check my flight" iconRight="arrow-forward" onPress={() => router.navigate('/')} />
       </View>
       <Text style={[styles.fine, { textAlign: 'center' }]}>General information, not legal advice.</Text>
     </Screen>
@@ -302,39 +309,39 @@ export default function RightsScreen() {
 }
 
 const styles = StyleSheet.create({
-  banner: { flexDirection: 'row', gap: S.md, alignItems: 'center', backgroundColor: C.accentSoft, borderRadius: R.lg, padding: S.lg, marginTop: S.xl, borderWidth: 1, borderColor: 'rgba(255,176,32,0.3)' },
-  bannerTitle: { color: C.text, fontFamily: F.bold, fontSize: 16 },
-  bannerBody: { ...T.small, color: C.muted, marginTop: 2 },
-  count: { color: C.accent, fontFamily: F.bold, fontSize: 12 },
-  block: { backgroundColor: C.surface, borderRadius: R.lg, paddingHorizontal: S.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
+  banner: { flexDirection: 'row', gap: S.md, alignItems: 'center', backgroundColor: C.gold, borderRadius: R.xl, padding: S.lg, ...GOLD_GLOW },
+  bannerTitle: { color: C.text, fontFamily: F.black, fontSize: 17 },
+  bannerBody: { ...T.small, color: '#3B3200', marginTop: 2 },
+  count: { color: C.blue, fontFamily: F.black, fontSize: 13 },
+  block: { backgroundColor: C.surface, borderRadius: R.xl, paddingHorizontal: S.lg, ...SHADOW },
   divider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.line },
   check: { flexDirection: 'row', gap: S.md, paddingVertical: S.md, alignItems: 'flex-start' },
-  box: { width: 24, height: 24, borderRadius: 7, borderWidth: 2, borderColor: C.faint, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
-  boxOn: { backgroundColor: C.accent, borderColor: C.accent },
-  checkTitle: { color: C.text, fontFamily: F.semibold, fontSize: 15 },
+  box: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: C.faint, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  boxOn: { backgroundColor: '#10B981', borderColor: '#10B981' },
+  checkTitle: { color: C.text, fontFamily: F.bold, fontSize: 15 },
   checkDone: { color: C.muted, textDecorationLine: 'line-through' },
   checkBody: { ...T.small, color: C.muted, marginTop: 2 },
-  tile: { flexDirection: 'row', gap: S.md, backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
-  tileTitle: { color: C.text, fontFamily: F.bold, fontSize: 15 },
+  tile: { flexDirection: 'row', gap: S.md, backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, ...SHADOW },
+  tileTitle: { color: C.text, fontFamily: F.black, fontSize: 15 },
   tileBody: { ...T.small, color: C.muted, marginTop: 2 },
-  cite: { alignSelf: 'flex-start', color: C.info, fontFamily: F.semibold, fontSize: 11, marginTop: 6, backgroundColor: C.infoSoft, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, overflow: 'hidden' },
+  cite: { alignSelf: 'flex-start', color: C.info, fontFamily: F.bold, fontSize: 11, marginTop: 6, backgroundColor: C.infoSoft, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, overflow: 'hidden' },
   fine: { ...T.small, color: C.faint, fontSize: 12, marginTop: S.sm },
   para: { ...T.body, color: C.muted, paddingVertical: S.lg },
   strong: { fontFamily: F.bold, color: C.text },
   tr: { flexDirection: 'row', alignItems: 'center', paddingVertical: S.md },
-  th: { ...T.label, color: C.faint, fontSize: 10, flex: 1 },
+  th: { ...T.label, color: C.muted, fontSize: 10, flex: 1 },
   td: { ...T.small, color: C.muted, flex: 1 },
-  money: { fontFamily: F.display, color: C.accent, fontSize: 18, flex: 1 },
+  money: { fontFamily: F.display, color: C.blue, fontSize: 19, flex: 1, letterSpacing: -0.4 },
   causes: { flexDirection: 'row', gap: S.sm },
-  causeCol: { flex: 1, backgroundColor: C.surface, borderRadius: R.lg, padding: S.md, gap: S.sm, borderWidth: 1, borderColor: C.line },
-  causeHead: { fontFamily: F.bold, fontSize: 13, marginBottom: 2 },
+  causeCol: { flex: 1, backgroundColor: C.surface, borderRadius: R.lg, padding: S.md, gap: S.sm, borderWidth: 1.5, borderColor: 'transparent', ...SHADOW },
+  causeHead: { fontFamily: F.black, fontSize: 13, marginBottom: 2 },
   causeRow: { flexDirection: 'row', gap: 6, alignItems: 'flex-start' },
   causeText: { ...T.small, color: C.text, flex: 1, fontSize: 12.5 },
   claimStep: { flexDirection: 'row', gap: S.md, paddingVertical: S.md },
-  num: { width: 28, height: 28, borderRadius: 14, borderWidth: 1.5, borderColor: C.accent, alignItems: 'center', justifyContent: 'center' },
-  numText: { fontFamily: F.display, color: C.accent, fontSize: 14 },
-  compare: { flexDirection: 'row', gap: S.md, alignItems: 'center', backgroundColor: C.goodSoft, borderRadius: R.lg, padding: S.lg, marginTop: S.md },
+  num: { width: 28, height: 28, borderRadius: 14, backgroundColor: C.blue, alignItems: 'center', justifyContent: 'center' },
+  numText: { fontFamily: F.black, color: C.onBlue, fontSize: 13 },
+  compare: { flexDirection: 'row', gap: S.md, alignItems: 'center', backgroundColor: C.goldSoft, borderRadius: R.lg, padding: S.lg, marginTop: S.md },
   compareText: { ...T.small, color: C.muted, flex: 1 },
   source: { flexDirection: 'row', alignItems: 'center', gap: S.md, paddingVertical: S.md },
-  sourceText: { color: C.text, fontFamily: F.semibold, fontSize: 14, flex: 1 },
+  sourceText: { color: C.text, fontFamily: F.bold, fontSize: 14, flex: 1 },
 });

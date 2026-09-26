@@ -3,7 +3,7 @@ import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import { Linking, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LetterView } from '@/components/LetterView';
-import { BackBar, Button, Card, Screen, SectionLabel } from '@/components/ui';
+import { BackBar, Button, Card, Screen, SectionLabel, Tag } from '@/components/ui';
 import { buildClaimLetter, type ClaimDetails } from '@/claim/letters';
 import { answersFor, effectiveFacts } from '@/lib/claim';
 import { evaluate, formatMoney } from '@/rules';
@@ -95,25 +95,36 @@ export default function KitScreen() {
     <Screen
       footer={
         <View style={{ gap: S.sm }}>
-          <Button title="I’ve sent it — remind me in 14 days" icon="paper-plane" onPress={() => save(true)} disabled={!name.trim()} />
+          <Button title="I’ve sent it — remind me in 14 days" variant="gold" icon="paper-plane" onPress={() => save(true)} disabled={!name.trim()} />
           <Button title="Save as draft" variant="subtle" icon="bookmark-outline" onPress={() => save(false)} disabled={!name.trim()} />
         </View>
       }
+      header={
+        <View>
+          <BackBar onBack={() => router.back()} title="Your Claim Kit" />
+          <Tag
+            text={`Claim Kit unlocked${ent.mode === 'preview' ? ' · Expo Go preview' : ent.mode === 'demo' ? ' · demo mode' : ''}`}
+            tone="gold"
+            icon="lock-open"
+            style={{ marginTop: S.lg }}
+          />
+          <Text style={styles.title}>
+            {total ? (
+              <>
+                Claim <Text style={{ color: C.gold }}>{total}</Text>
+              </>
+            ) : (
+              'Request your refund'
+            )}
+          </Text>
+          <Text style={styles.sub}>
+            Your letter cites the exact rules that apply. Send it through {verdict.claimAgainst.name}’s official claim form or customer
+            relations email.
+          </Text>
+        </View>
+      }
     >
-      <BackBar onBack={() => router.back()} title="Your Claim Kit" />
-      <View style={styles.unlocked}>
-        <Ionicons name="lock-open" size={14} color={C.good} />
-        <Text style={styles.unlockedText}>
-          Claim Kit unlocked{ent.mode === 'preview' ? ' · Expo Go preview' : ent.mode === 'demo' ? ' · demo mode' : ''}
-        </Text>
-      </View>
-      <Text style={styles.title}>{total ? `Claim ${total}` : 'Request your refund'}</Text>
-      <Text style={styles.sub}>
-        Your letter cites the exact rules that apply. Send it through {verdict.claimAgainst.name}’s official claim form or
-        customer relations email.
-      </Text>
-
-      <SectionLabel>Your details</SectionLabel>
+      <SectionLabel style={{ marginTop: S.sm }}>Your details</SectionLabel>
       <Card>
         <Field label="Your full name" value={name} onChange={setName} placeholder="As on the booking" />
         <Field label="Other passengers (optional)" value={others} onChange={setOthers} placeholder="Comma-separated names" />
@@ -147,7 +158,7 @@ export default function KitScreen() {
           { icon: 'notifications-outline' as const, t: 'Sent it? Tap the button below — we’ll remind you to follow up if there’s no reply in 14 days.' },
         ].map((b) => (
           <View key={b.t} style={styles.bulletRow}>
-            <Ionicons name={b.icon} size={16} color={C.accent} />
+            <Ionicons name={b.icon} size={16} color={C.blue} />
             <Text style={styles.bullet}>{b.t}</Text>
           </View>
         ))}
@@ -158,23 +169,19 @@ export default function KitScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { ...T.h1, color: C.accent, marginTop: S.sm },
-  unlocked: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: C.goodSoft, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
-  unlockedText: { color: C.good, fontFamily: F.bold, fontSize: 12 },
+  title: { ...T.h1, color: C.onBlue, marginTop: S.md, fontSize: 32, lineHeight: 38 },
   bulletRow: { flexDirection: 'row', gap: S.sm, alignItems: 'flex-start' },
   hint: { ...T.small, color: C.faint, textAlign: 'center', marginTop: S.lg },
-  sub: { ...T.body, color: C.muted, marginTop: S.xs },
-  label: { ...T.label, color: C.muted, fontSize: 11, marginBottom: 6 },
+  sub: { ...T.body, color: C.onBlueMuted, marginTop: S.xs },
+  label: { ...T.label, color: C.text, fontSize: 11, marginBottom: 6 },
   input: {
     backgroundColor: C.bg,
-    borderRadius: R.sm,
-    borderWidth: 1,
-    borderColor: C.line,
+    borderRadius: R.md,
     color: C.text,
     fontSize: 16,
-    fontFamily: F.medium,
-    paddingHorizontal: S.md,
-    height: 50,
+    fontFamily: F.bold,
+    paddingHorizontal: S.lg,
+    height: 54,
   },
   bullet: { ...T.small, color: C.text, flex: 1 },
 });

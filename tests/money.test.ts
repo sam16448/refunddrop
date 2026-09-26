@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SAMPLE_FLIGHTS } from '../src/data/sampleFlights';
-import { claimValue, sumMoney, walletTotals } from '../src/lib/money';
+import { agencySavings, claimValue, sumMoney, walletTotals } from '../src/lib/money';
 import type { SavedClaim } from '../src/state/claims';
 
 const lh = SAMPLE_FLIGHTS.find((s) => s.facts.flightNumber === 'LH 764')!;
@@ -34,5 +34,10 @@ describe('claim wallet', () => {
   it('splits open and received money', () => {
     const w = walletTotals([claim(lh, 'sent'), claim(vy, 'paid')]);
     expect(w).toMatchObject({ open: '€600', received: '€250', openCount: 1, paidCount: 1 });
+  });
+
+  it('shows what a 35% claim company would have kept', () => {
+    expect(agencySavings([])).toBe('€0');
+    expect(agencySavings([claim(lh, 'sent'), claim(vy, 'paid')])).toBe('€298');
   });
 });

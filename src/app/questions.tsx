@@ -2,10 +2,10 @@ import { Redirect, router } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
-import { BackBar, Button, ChipGroup, Screen } from '@/components/ui';
+import { BackBar, Button, ChipGroup, Screen, Tag } from '@/components/ui';
 import { determineScope, type DisruptionReason, type NoticeBucket, type PassengerAnswers } from '@/rules';
 import { useClaim, type Experience } from '@/state/claim';
-import { C, F, S, T } from '@/theme';
+import { C, F, R, S, SHADOW, T } from '@/theme';
 
 const REASONS: { value: DisruptionReason; label: string }[] = [
   { value: 'technical', label: 'Technical problem' },
@@ -91,10 +91,17 @@ export default function QuestionsScreen() {
   );
 
   return (
-    <Screen footer={<Button title="See my result" icon="sparkles" onPress={() => router.push('/verdict')} />}>
-      <BackBar onBack={() => router.back()} title={`Step 2 of 3 · ${facts.flightNumber}`} />
-      <Text style={styles.title}>A few quick questions</Text>
-      <Text style={styles.sub}>Only things the flight data can’t tell us.</Text>
+    <Screen
+      overlap={28}
+      footer={<Button title="See my result" icon="sparkles" iconRight="arrow-forward" onPress={() => router.push('/verdict')} />}
+      header={
+        <View>
+          <BackBar onBack={() => router.back()} title="Step 2 of 3" right={<Tag text={facts.flightNumber} tone="glass" icon="airplane" />} />
+          <Text style={styles.title}>A few quick questions</Text>
+          <Text style={styles.sub}>Only things the flight data can’t tell us.</Text>
+        </View>
+      }
+    >
 
       <Question title="What happened to you?">
         <ChipGroup<Experience>
@@ -197,9 +204,9 @@ export default function QuestionsScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { ...T.h1, color: C.text },
-  sub: { ...T.body, color: C.muted, marginTop: S.xs },
-  q: { marginTop: S.lg, backgroundColor: C.surface, borderRadius: 20, padding: S.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
-  qTitle: { color: C.text, fontSize: 17, fontFamily: F.bold },
+  title: { ...T.h1, color: C.onBlue, marginTop: S.lg },
+  sub: { ...T.body, color: C.onBlueMuted, marginTop: S.xs },
+  q: { marginBottom: S.lg, backgroundColor: C.surface, borderRadius: R.xl, padding: S.xl, ...SHADOW },
+  qTitle: { color: C.text, fontSize: 17, fontFamily: F.black, letterSpacing: -0.2 },
   qHint: { ...T.small, color: C.muted, marginTop: 4 },
 });

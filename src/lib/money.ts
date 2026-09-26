@@ -32,3 +32,16 @@ export function walletTotals(claims: SavedClaim[]): { open: string; received: st
     paidCount: paid.length,
   };
 }
+
+/** Typical claim-company commission, used to show what claiming yourself saves. */
+export const AGENCY_CUT = 0.35;
+
+/** What claim companies would have kept from these claims (35% of each), summed per currency. */
+export function agencySavings(claims: SavedClaim[]): string {
+  return sumMoney(
+    claims.map((c) => {
+      const v = claimValue(c);
+      return v ? { amount: Math.round(v.amount * AGENCY_CUT), currency: v.currency } : undefined;
+    }),
+  );
+}

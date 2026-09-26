@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { localDate, localTime } from '@/lib/format';
 import { formatDuration, greatCircleKm, minutesBetween, type FlightFacts } from '@/rules';
-import { C, F, R, S, T } from '@/theme';
+import { C, F, R, S, SHADOW, T } from '@/theme';
 
 /** Flight shown as a boarding pass: route on top, tear line, times on the stub. */
 export function BoardingPassCard({ facts }: { facts: FlightFacts }) {
@@ -31,7 +31,7 @@ export function BoardingPassCard({ facts }: { facts: FlightFacts }) {
           </View>
           <View style={styles.arcWrap}>
             <Svg width="100%" height={34} viewBox="0 0 120 34" preserveAspectRatio="none">
-              <Path d="M 4 30 Q 60 -8 116 30" stroke={C.line} strokeWidth={2} strokeDasharray="4 5" fill="none" />
+              <Path d="M 4 30 Q 60 -8 116 30" stroke={C.faint} strokeWidth={2} strokeDasharray="4 5" fill="none" />
             </Svg>
             <View style={styles.planeDot}>
               <Ionicons name="airplane" size={16} color={C.accentInk} />
@@ -65,13 +65,13 @@ export function BoardingPassCard({ facts }: { facts: FlightFacts }) {
           value={facts.status === 'cancelled' ? 'Cancelled' : localTime(facts.actualArrivalUtc, facts.destination.tz)}
           big
           align="right"
-          color={facts.status === 'cancelled' ? C.bad : late ? C.accent : C.text}
+          color={facts.status === 'cancelled' || late ? C.bad : C.text}
         />
       </View>
       {arrDelay !== undefined && arrDelay > 0 && facts.status !== 'cancelled' ? (
-        <View style={[styles.delayBar, { backgroundColor: late ? C.accentSoft : C.surfaceHi }]}>
-          <Ionicons name="time" size={14} color={late ? C.accent : C.muted} />
-          <Text style={[styles.delayText, { color: late ? C.accent : C.muted }]}>{formatDuration(arrDelay)} late at the gate</Text>
+        <View style={[styles.delayBar, { backgroundColor: late ? C.goldSoft : C.surfaceHi }]}>
+          <Ionicons name="time" size={14} color={late ? C.text : C.muted} />
+          <Text style={[styles.delayText, { color: late ? C.text : C.muted }]}>{formatDuration(arrDelay)} late at the gate</Text>
         </View>
       ) : null}
     </View>
@@ -100,12 +100,12 @@ function Meta({
 }
 
 const styles = StyleSheet.create({
-  pass: { backgroundColor: C.surface, borderRadius: R.xl, borderWidth: StyleSheet.hairlineWidth, borderColor: C.line, overflow: 'hidden' },
+  pass: { backgroundColor: C.surface, borderRadius: R.xl, ...SHADOW },
   top: { padding: S.xl, paddingBottom: S.lg },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  carrier: { ...T.label, color: C.muted, flex: 1 },
+  carrier: { ...T.label, color: C.blue, flex: 1 },
   flightNo: { fontFamily: F.display, color: C.text, fontSize: 16, letterSpacing: 0.5 },
-  code: { fontFamily: F.display, color: C.text, fontSize: 44, letterSpacing: 1, lineHeight: 48 },
+  code: { fontFamily: F.display, color: C.text, fontSize: 42, letterSpacing: -0.5, lineHeight: 48 },
   city: { ...T.small, color: C.muted, maxWidth: 110 },
   arcWrap: { flex: 1, marginHorizontal: S.sm, marginBottom: 22, alignItems: 'center', justifyContent: 'center' },
   planeDot: {
@@ -119,12 +119,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   metaLabel: { ...T.label, fontSize: 10, color: C.faint },
-  metaValue: { fontFamily: F.semibold, color: C.text, fontSize: 15, marginTop: 4 },
-  metaBig: { fontFamily: F.display, fontSize: 28, marginTop: 2 },
+  metaValue: { fontFamily: F.bold, color: C.text, fontSize: 15, marginTop: 4 },
+  metaBig: { fontFamily: F.display, fontSize: 28, marginTop: 2, letterSpacing: -0.6 },
   tear: { height: 28, justifyContent: 'center' },
   dash: { marginHorizontal: S.xl, borderTopWidth: 1.5, borderStyle: 'dashed', borderColor: C.line },
   notch: { position: 'absolute', top: 0, width: 28, height: 28, borderRadius: 14, backgroundColor: C.bg },
   stub: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: S.xl, paddingTop: S.xs, paddingBottom: S.lg },
-  delayBar: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: S.xl, paddingVertical: S.md },
+  delayBar: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: S.xl, paddingVertical: S.md, borderBottomLeftRadius: R.xl, borderBottomRightRadius: R.xl },
   delayText: { fontFamily: F.bold, fontSize: 13 },
 });
