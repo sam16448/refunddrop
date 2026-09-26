@@ -2,32 +2,48 @@
 
 **Claim what airlines owe you — and keep all of it.**
 
-RefundDrop checks whether a delayed, cancelled or overbooked flight entitles you to money under EU261, UK261 or US DOT refund rules. It explains every step of its reasoning with the rule it relied on, and (coming next) generates a ready-to-send claim kit, so you don't hand 25–50% of your payout to a claim company.
+<img src="assets/icon.png" width="96" align="right" alt="RefundDrop icon"/>
 
-> Built for the RevenueCat Shipaton 2026 **Next Gen Award**.
+Scan your boarding pass. RefundDrop pulls your flight's real arrival time, applies EU261, UK261 or US DOT refund rules step by step, and tells you honestly whether you're owed money — citing the law behind every step. If you are, it writes the claim, the follow-up and the regulator complaint for you, so you don't hand 25–50% of your payout to a claim company.
 
-## Status
+> Built for the RevenueCat **Shipaton 2026 Next Gen Award**.
 
-| Part | State |
+## Why it exists
+
+Airlines owe passengers €250–€600 for long delays, short-notice cancellations and overbooking on European flights, yet most eligible passengers never claim. The ones who do usually go through claim companies that keep around a third of the money. The eligibility check itself is simple once the rules are encoded — so RefundDrop gives the check away and charges a small, flat fee for the part that actually saves people money: a claim that cites the right rules and a process that doesn't give up after one email.
+
+## What it does
+
+| Step | What happens |
 | --- | --- |
-| Rules engine (EU261, UK261, US DOT refunds) | Done |
-| Sample flights (demo mode, no API key needed) | Done |
-| Lookup → flight card → questions → verdict screens | Done |
-| AeroDataBox normalizer + Cloudflare Worker proxy | Done (deploy needs your own key) |
-| Claim Kit: claim letter, follow-up, escalation (copy, share, PDF) | Done |
-| On-device claim tracker with follow-up reminders | Done |
-| Tests | 64 passing |
-| RevenueCat paywall | Next |
-| Boarding-pass barcode scanning | Next |
+| **Scan** | Reads the IATA barcode on any paper or mobile boarding pass (PDF417, Aztec, QR) — flight, date, name and booking reference, fully offline |
+| **Look up** | Fetches scheduled vs actual arrival and the operating airline via AeroDataBox (through a key-hiding proxy) |
+| **Ask** | Only what data can't know: connections, the cause the airline gave, cancellation notice, replacement flight, overbooking |
+| **Verdict** | *Likely*, *possibly*, *refund only*, *not eligible* or *not covered* — with every rule it applied, what's still unconfirmed, and other rights (meals, hotels, refunds) |
+| **Claim Kit** | Claim letter, day-14 follow-up and escalation to the right national enforcement body; copy, share or PDF |
+| **Track** | On-device tracker: Drafted → Sent → Replied → Paid, with follow-up reminders |
+
+## Monetization (RevenueCat)
+
+| Product | Type | Price | Unlocks |
+| --- | --- | --- | --- |
+| `claim_kit` | One-time | $4.99 | Claim Kit for one flight |
+| `frequent_flyer_annual` | Subscription (`pro` entitlement) | $19.99/yr | Every flight |
+
+- The eligibility check is **always free** — trust is the funnel, and people claim rarely, so per-claim pricing matches how they actually use it. Frequent travellers get the subscription.
+- The paywall shows the real comparison for *their* flight: a claim company's ~35% fee vs $4.99.
+- Claim Kit purchases are counted from RevenueCat's non-subscription transactions, so each purchase is one credit that survives reinstalls via **Restore purchases**. The flight a credit was spent on is remembered on-device.
+- Running the open-source repo without a RevenueCat key switches to a clearly-labelled **demo mode** so anyone can explore the full flow.
 
 ## What makes it different
 
-- **Honest output.** It says *likely*, *possibly*, *refund only* or *not covered*, never "you are owed". An unknown cause of disruption produces "possibly eligible" and a claim letter that asks the airline to state it.
-- **Explainable.** Every verdict lists the steps it took and the article or court ruling behind each one.
-- **Deterministic.** Eligibility comes from a pure TypeScript rules engine, not an AI model. Same input, same answer, fully tested.
-- **Versioned rules.** Thresholds and amounts live in `src/rules/config.ts`, so the EU261 reform expected in 2027 is a config change, not a rewrite.
+- **Honest output.** Never "you are owed". An unknown cause gives "possibly eligible" and a letter that asks the airline to state and prove it. Bad weather gives a clear *no*.
+- **Explainable.** Every verdict lists its steps with the article or court ruling behind each (Sturgeon, Wallentin-Hermann, Airhelp v SAS, Folkerts…).
+- **Deterministic.** Eligibility comes from a pure, tested TypeScript rules engine — not an AI model.
+- **Versioned rules.** Thresholds and amounts live in `src/rules/config.ts`, so the EU261 reform expected in 2027 is a config change.
+- **Private.** Claims and scanned details stay on the phone.
 
-## What the engine covers
+## Rules covered
 
 | Situation | Rule |
 | --- | --- |
@@ -44,34 +60,44 @@ RefundDrop checks whether a delayed, cancelled or overbooked flight entitles you
 
 The US has no federal cash compensation for delays — DOT withdrew that proposal in November 2025 — so US flights get refund guidance only.
 
+## Architecture
+
+```mermaid
+flowchart LR
+  BP[Boarding pass barcode] -->|IATA BCBP parser, on device| App
+  App -->|flight number + date| W[Cloudflare Worker<br/>holds API key, 24h cache]
+  W --> ADB[(AeroDataBox)]
+  W -->|normalized FlightFacts| App
+  App --> E[Rules engine<br/>pure TypeScript]
+  E --> V[Verdict + cited steps]
+  V --> P{Unlocked?}
+  P -->|no| RC[RevenueCat paywall]
+  RC --> K[Claim Kit letters]
+  P -->|yes| K
+  K --> T[(On-device tracker)]
+```
+
+The app never holds the flight-data API key, so the repository can stay public. Sample flight numbers and the sample boarding pass resolve on-device, so the demo works offline.
+
 ## Project layout
 
 ```
-src/app/            Screens (Expo Router): lookup, flight, questions, verdict, kit, claims, letter
-src/claim/          Claim, follow-up and escalation letter templates
-src/components/     UI building blocks and the route arc
+src/app/            Screens (Expo Router): intro, lookup, scan, flight, questions,
+                    verdict, paywall, kit, claims, letter
 src/rules/          Rules engine (pure TypeScript, no React)
   types.ts          Inputs and verdict types
   config.ts         Versioned thresholds and amounts
   engine.ts         Scope → disruption → amount → verdict
   geo.ts            Regions and great-circle distance
   reference.ts      Airports and airline licences
-src/services/       Flight lookup + AeroDataBox normalizer (shared with the Worker)
-src/data/           Sample flights for demo mode
-worker/             Cloudflare Worker that holds the API key and caches lookups
-tests/              Vitest suite
+src/claim/          Claim, follow-up and escalation letter templates
+src/services/       Flight lookup, AeroDataBox normalizer, boarding-pass parser, RevenueCat
+src/state/          Flow state, claim tracker, entitlements
+src/data/           Sample flights and sample boarding pass
+worker/             Cloudflare Worker proxy
+tests/              Vitest suite (73 tests)
+docs/               Sample boarding pass for demos
 ```
-
-## Architecture
-
-```
-App ──► Cloudflare Worker ──► AeroDataBox (flight status)
- │        (holds API key, caches 24h, returns normalized FlightFacts)
- │
- └──► Rules engine (on device, deterministic) ──► Verdict with cited steps
-```
-
-The app never holds the flight-data API key, so the repository can stay public. Sample flight numbers resolve on-device, so the demo works offline.
 
 ## Run it
 
@@ -81,15 +107,21 @@ You need [Node.js LTS](https://nodejs.org) and [Git](https://git-scm.com).
 git clone https://github.com/sam16448/refunddrop.git
 cd refunddrop
 npm install
-npm test          # runs the rules-engine tests
-npx expo start    # then press "a" to open on an Android emulator
+npm test            # 73 tests: rules engine, letters, boarding passes, API normalizer
+npx expo start      # opens in Expo Go (purchases run in RevenueCat preview mode)
 ```
 
-No API key is needed: the app runs on built-in sample flights (try `LH 764` or tap a sample).
+No keys are needed: tap a sample flight, or **Scan boarding pass → Try a sample boarding pass**. You can also scan [`docs/sample-boarding-pass.png`](docs/sample-boarding-pass.png) from your screen.
+
+### Real purchases (RevenueCat Test Store)
+
+1. Create a RevenueCat project with products `claim_kit` and `frequent_flyer_annual`, entitlement `pro`, and a `default` offering containing both.
+2. Put the Test Store key in `.env`: `EXPO_PUBLIC_REVENUECAT_API_KEY=test_...`
+3. Build a development client (purchases need native code): `npx eas-cli build --profile development --platform android`, install the APK, then `npx expo start`.
 
 ### Live flight data (optional)
 
-1. Subscribe to the free AeroDataBox plan on RapidAPI and copy your key.
+1. Subscribe to the free AeroDataBox plan on RapidAPI.
 2. Deploy the proxy:
    ```bash
    cd worker
@@ -98,11 +130,11 @@ No API key is needed: the app runs on built-in sample flights (try `LH 764` or t
    npx wrangler secret put RAPIDAPI_KEY
    npx wrangler deploy
    ```
-3. Copy `.env.example` to `.env` and set `EXPO_PUBLIC_FLIGHT_PROXY_URL` to the URL wrangler printed. Restart `npx expo start`.
+3. Add `EXPO_PUBLIC_FLIGHT_PROXY_URL=<your worker URL>` to `.env` and restart.
 
-## Sample flights
+## Sample data
 
-The four sample flights use realistic routes and schedules with **invented** disruptions, chosen to show each rule path: a long-haul EU delay (€600), a short-notice EU cancellation (€250), a US domestic delay (refund only) and a non-European airline flying into the UK (not covered). They are labelled "Sample" in the app.
+The four sample flights use realistic routes and schedules with **invented** disruptions, chosen to show each rule path: a long-haul EU delay (€600), a short-notice EU cancellation (€250), a US domestic delay (refund only) and a non-European airline flying into the UK (not covered). The sample boarding pass is for a fictional passenger and is marked "not valid for travel".
 
 ## Disclaimer
 

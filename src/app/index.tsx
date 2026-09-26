@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Button, Card, Screen, SectionLabel } from '@/components/ui';
 import { SAMPLE_FLIGHTS, type SampleFlight } from '@/data/sampleFlights';
@@ -8,6 +9,7 @@ import { isValidDate, isValidFlightNumber, yesterdayIso } from '@/lib/format';
 import { lookupFlight } from '@/services/flightLookup';
 import { useClaim } from '@/state/claim';
 import { useClaims } from '@/state/claims';
+import { INTRO_SEEN_KEY } from '@/lib/storageKeys';
 import { C, R, S, T } from '@/theme';
 
 export default function LookupScreen() {
@@ -17,6 +19,14 @@ export default function LookupScreen() {
   const [date, setDate] = useState(yesterdayIso());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
+
+  useEffect(() => {
+    AsyncStorage.getItem(INTRO_SEEN_KEY)
+      .then((seen) => {
+        if (!seen) router.replace('/intro');
+      })
+      .catch(() => {});
+  }, []);
 
   const openSample = (s: SampleFlight) => {
     setPassenger(undefined);
