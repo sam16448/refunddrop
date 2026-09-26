@@ -129,13 +129,6 @@ const EXTRAORDINARY: ReadonlySet<DisruptionReason> = new Set([
   'third_party_strike',
 ]);
 
-const WITHIN_AIRLINE_CONTROL: ReadonlySet<DisruptionReason> = new Set([
-  'technical',
-  'crew_shortage',
-  'airline_staff_strike',
-  'operational',
-]);
-
 export const REASON_LABELS: Record<DisruptionReason, string> = {
   weather: 'Bad weather',
   air_traffic_control: 'Air traffic control restrictions',

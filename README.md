@@ -1,5 +1,7 @@
 # RefundDrop
 
+[![CI](https://github.com/sam16448/refunddrop/actions/workflows/ci.yml/badge.svg)](https://github.com/sam16448/refunddrop/actions/workflows/ci.yml) ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
+
 **Claim what airlines owe you — and keep all of it.**
 
 <img src="assets/icon.png" width="96" align="right" alt="RefundDrop icon"/>

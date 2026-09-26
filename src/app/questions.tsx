@@ -93,7 +93,7 @@ export default function QuestionsScreen() {
     <Screen footer={<Button title="See my result" onPress={() => router.push('/verdict')} />}>
       <BackBar onBack={() => router.back()} title={`${facts.flightNumber} · ${facts.origin.iata} → ${facts.destination.iata}`} />
       <Text style={styles.title}>A few quick questions</Text>
-      <Text style={styles.sub}>Only things the flight data can't tell us.</Text>
+      <Text style={styles.sub}>Only things the flight data can’t tell us.</Text>
 
       <Question title="What happened to you?">
         <ChipGroup<Experience>

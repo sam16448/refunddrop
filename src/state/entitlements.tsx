@@ -40,7 +40,7 @@ interface EntitlementsState {
 const Ctx = createContext<EntitlementsState | null>(null);
 
 export function EntitlementsProvider({ children }: { children: ReactNode }) {
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(DEMO_MODE);
   const [info, setInfo] = useState<CustomerInfo>();
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
   /** flightKey → transaction id (or "demo") */
@@ -52,7 +52,7 @@ export function EntitlementsProvider({ children }: { children: ReactNode }) {
       .catch(() => {});
 
     if (!configurePurchases()) {
-      setReady(true);
+      queueMicrotask(() => setReady(true));
       return;
     }
     const off = onCustomerInfo(setInfo);

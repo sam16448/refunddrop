@@ -29,7 +29,7 @@ const STEP_ICON: Record<StepStatus, { name: keyof typeof Ionicons.glyphMap; colo
 function useCountUp(target: number): number {
   const [value, setValue] = useState(0);
   useEffect(() => {
-    if (target <= 0) return setValue(0);
+    if (target <= 0) return;
     const start = Date.now();
     const id = setInterval(() => {
       const t = Math.min(1, (Date.now() - start) / 900);
@@ -39,7 +39,7 @@ function useCountUp(target: number): number {
     }, 16);
     return () => clearInterval(id);
   }, [target]);
-  return value;
+  return target <= 0 ? 0 : value;
 }
 
 export default function VerdictScreen() {
