@@ -32,10 +32,10 @@ function PlanCard({ plan, selected, onPress }: { plan: PlanOption; selected: boo
     >
       <Ionicons name={selected ? 'radio-button-on' : 'radio-button-off'} size={22} color={selected ? C.accent : C.faint} />
       <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: S.sm }}>
-          <Text style={styles.planTitle}>{kit ? 'This claim' : 'Frequent Flyer'}</Text>
-          {!kit ? <Text style={styles.badge}>BEST FOR 4+ TRIPS</Text> : null}
-        </View>
+        {!kit ? <Text style={styles.badge}>BEST FOR 4+ TRIPS</Text> : null}
+        <Text style={styles.planTitle} numberOfLines={1}>
+          {kit ? 'This claim' : 'Frequent Flyer'}
+        </Text>
         <Text style={styles.planSub}>{kit ? 'One-time, for this flight' : 'Unlimited claims for a year'}</Text>
       </View>
       <View style={{ alignItems: 'flex-end' }}>
@@ -199,9 +199,9 @@ const styles = StyleSheet.create({
   planSelected: { borderColor: C.accent, backgroundColor: C.accentSoft },
   planTitle: { color: C.text, fontSize: 16, fontFamily: F.bold },
   planSub: { ...T.small, color: C.muted, marginTop: 2 },
-  planPrice: { fontFamily: F.display, color: C.text, fontSize: 22 },
+  planPrice: { fontFamily: F.display, color: C.text, fontSize: 22, flexShrink: 0 },
   planPer: { ...T.small, color: C.faint, fontSize: 11 },
-  badge: { color: C.accentInk, backgroundColor: C.accent, fontSize: 9, fontFamily: F.black, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, overflow: 'hidden', letterSpacing: 0.5 },
+  badge: { alignSelf: 'flex-start', marginBottom: 6, color: C.accentInk, backgroundColor: C.accent, fontSize: 9, fontFamily: F.black, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, overflow: 'hidden', letterSpacing: 0.5 },
   modeNote: { flexDirection: 'row', gap: S.sm, alignItems: 'flex-start', marginTop: S.lg, backgroundColor: C.infoSoft, padding: S.md, borderRadius: R.md },
   modeText: { ...T.small, color: C.info, flex: 1 },
   restore: { color: C.info, fontFamily: F.bold },
