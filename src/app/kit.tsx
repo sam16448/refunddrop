@@ -44,12 +44,12 @@ function Field({
 }
 
 export default function KitScreen() {
-  const { facts, answers, experience } = useClaim();
+  const { facts, answers, experience, passenger } = useClaim();
   const { add } = useClaims();
   const ent = useEntitlements();
-  const [name, setName] = useState('');
+  const [name, setName] = useState(passenger?.name ?? '');
   const [others, setOthers] = useState('');
-  const [bookingRef, setBookingRef] = useState('');
+  const [bookingRef, setBookingRef] = useState(passenger?.bookingRef ?? '');
   const [email, setEmail] = useState('');
 
   const effFacts = facts ? effectiveFacts(facts, experience) : undefined;

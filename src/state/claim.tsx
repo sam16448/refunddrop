@@ -6,8 +6,16 @@ export type FlightSource = 'sample' | 'live';
 /** What the passenger says happened, which can differ from the API status (e.g. denied boarding). */
 export type Experience = 'delay' | 'cancel' | 'denied';
 
+/** Details read from a scanned boarding pass, used to prefill the Claim Kit. */
+export interface ScannedPassenger {
+  name: string;
+  bookingRef: string;
+}
+
 interface ClaimState {
   facts?: FlightFacts;
+  passenger?: ScannedPassenger;
+  setPassenger: (p?: ScannedPassenger) => void;
   source?: FlightSource;
   answers: PassengerAnswers;
   experience: Experience;
@@ -25,10 +33,13 @@ export function ClaimProvider({ children }: { children: ReactNode }) {
   const [source, setSource] = useState<FlightSource>();
   const [answers, setAnswers] = useState<PassengerAnswers>({});
   const [experience, setExperience] = useState<Experience>('delay');
+  const [passenger, setPassenger] = useState<ScannedPassenger>();
 
   const value = useMemo<ClaimState>(
     () => ({
       facts,
+      passenger,
+      setPassenger,
       source,
       answers,
       experience,
@@ -42,12 +53,13 @@ export function ClaimProvider({ children }: { children: ReactNode }) {
       setAnswers,
       reset: () => {
         setFacts(undefined);
+        setPassenger(undefined);
         setSource(undefined);
         setAnswers({});
         setExperience('delay');
       },
     }),
-    [facts, source, answers, experience],
+    [facts, passenger, source, answers, experience],
   );
 
   return <ClaimContext.Provider value={value}>{children}</ClaimContext.Provider>;

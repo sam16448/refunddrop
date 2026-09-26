@@ -11,7 +11,7 @@ import { useClaims } from '@/state/claims';
 import { C, R, S, T } from '@/theme';
 
 export default function LookupScreen() {
-  const { setFlight } = useClaim();
+  const { setFlight, setPassenger } = useClaim();
   const { claims } = useClaims();
   const [number, setNumber] = useState('');
   const [date, setDate] = useState(yesterdayIso());
@@ -19,6 +19,7 @@ export default function LookupScreen() {
   const [error, setError] = useState<string>();
 
   const openSample = (s: SampleFlight) => {
+    setPassenger(undefined);
     setFlight(s.facts, 'sample');
     router.push('/flight');
   };
@@ -32,6 +33,7 @@ export default function LookupScreen() {
     setLoading(false);
     if (result.kind === 'error') return setError(result.message);
     if (result.kind === 'sample') return openSample(result.sample);
+    setPassenger(undefined);
     setFlight(result.flights[0], 'live');
     router.push('/flight');
   };
@@ -55,7 +57,12 @@ export default function LookupScreen() {
       <Text style={styles.hero}>Delayed or cancelled?</Text>
       <Text style={styles.sub}>See what the airline owes you under EU, UK and US rules — and claim it yourself, keeping 100%.</Text>
 
-      <Card style={{ marginTop: S.xl }}>
+      <View style={{ marginTop: S.xl }}>
+        <Button title="Scan boarding pass" icon="scan" onPress={() => router.push('/scan')} />
+      </View>
+
+      <SectionLabel>Or enter your flight</SectionLabel>
+      <Card>
         <Text style={styles.inputLabel}>Flight number</Text>
         <TextInput
           value={number}
@@ -80,7 +87,7 @@ export default function LookupScreen() {
         />
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <View style={{ marginTop: S.lg }}>
-          <Button title="Check my flight" icon="search" onPress={check} loading={loading} />
+          <Button title="Check my flight" icon="search" variant="ghost" onPress={check} loading={loading} />
         </View>
       </Card>
 
