@@ -7,12 +7,20 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "android": { "buildType": "apk" }
+      "environment": "development",
+      "android": { "buildType": "apk", "image": "latest" },
+      "ios": { "image": "latest" }
     },
     "preview": {
       "distribution": "internal",
-      "android": { "buildType": "apk" }
+      "environment": "preview",
+      "android": { "buildType": "apk", "image": "latest" },
+      "ios": { "image": "latest" }
     },
-    "production": {}
+    "production": {
+      "environment": "production",
+      "android": { "image": "latest" },
+      "ios": { "image": "latest" }
+    }
   }
 }
