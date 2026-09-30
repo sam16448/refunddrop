@@ -60,7 +60,7 @@ Five tabs, built around what a disrupted traveller actually needs:
 - The eligibility check is **always free** — trust is the funnel, and people claim rarely, so per-claim pricing matches how they actually use it. Frequent travellers get the subscription.
 - The paywall shows the real comparison for *their* flight: a claim company's ~35% fee vs $4.99.
 - Claim Kit purchases are counted from RevenueCat's non-subscription transactions, so each purchase is one credit that survives reinstalls via **Restore purchases**. The flight a credit was spent on is remembered on-device.
-- In **Expo Go** (where store purchases can't run) the paywall shows the same plans and unlocks locally with a clear "preview" label; without a RevenueCat key the repo runs in a labelled **demo mode**. Real purchases run in development and store builds.
+- With a RevenueCat **Test Store** key (`test_…`), real test purchases run everywhere — development builds, the web, and even **Expo Go**, where RevenueCat shows its own "Test Store Purchase" sheet — and land in the RevenueCat dashboard as sandbox transactions. With a store key, Expo Go falls back to a clearly labelled "preview" unlock; without any key the repo runs in a labelled **demo mode**.
 
 ## What makes it different
 
@@ -135,7 +135,7 @@ git clone https://github.com/sam16448/refunddrop.git
 cd refunddrop
 npm install
 npm test            # 78 tests: rules engine, letters, boarding passes, API normalizer, claim wallet
-npx expo start      # opens in Expo Go (purchases run in RevenueCat preview mode)
+npx expo start      # opens in Expo Go (a Test Store key runs real RevenueCat test purchases)
 ```
 
 No keys are needed: tap a sample flight, or **Scan boarding pass → Try a sample boarding pass**. You can also scan [`docs/sample-boarding-pass.png`](docs/sample-boarding-pass.png) from your screen.

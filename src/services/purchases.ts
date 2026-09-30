@@ -17,13 +17,20 @@ import Purchases, { LOG_LEVEL, type CustomerInfo, type PurchasesPackage } from '
 export const API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY ?? '';
 
 /**
+ * RevenueCat Test Store keys start with "test_". With one, the SDK runs real test purchases everywhere,
+ * including Expo Go and the web (it shows RevenueCat's own "Test Store Purchase" sheet), and they show up
+ * in the RevenueCat dashboard as sandbox transactions.
+ */
+export const IS_TEST_STORE_KEY = API_KEY.startsWith('test_');
+
+/**
  * How purchases behave in this run:
- *  - live:    native RevenueCat SDK (development or store build with a key)
- *  - preview: Expo Go, where store purchases can't run; unlocks locally and says so
+ *  - live:    RevenueCat SDK makes the purchase (any build with a key; Expo Go with a Test Store key)
+ *  - preview: Expo Go with a store key, where store purchases can't run; unlocks locally and says so
  *  - demo:    no RevenueCat key (e.g. someone running the open-source repo)
  */
 export type PurchaseMode = 'live' | 'preview' | 'demo';
-export const PURCHASE_MODE: PurchaseMode = !API_KEY ? 'demo' : isRunningInExpoGo() ? 'preview' : 'live';
+export const PURCHASE_MODE: PurchaseMode = !API_KEY ? 'demo' : isRunningInExpoGo() && !IS_TEST_STORE_KEY ? 'preview' : 'live';
 export const PRO_ENTITLEMENT = 'pro';
 export const CLAIM_KIT_PRODUCT = 'claim_kit';
 
@@ -63,13 +70,13 @@ export async function loadPackages(): Promise<PurchasesPackage[]> {
 }
 
 export type PurchaseOutcome =
-  | { ok: true; info: CustomerInfo; productIdentifier: string }
+  | { ok: true; info: CustomerInfo; productIdentifier: string; transactionId?: string }
   | { ok: false; cancelled: boolean; message?: string };
 
 export async function buy(pkg: PurchasesPackage): Promise<PurchaseOutcome> {
   try {
-    const { customerInfo, productIdentifier } = await Purchases.purchasePackage(pkg);
-    return { ok: true, info: customerInfo, productIdentifier };
+    const { customerInfo, productIdentifier, transaction } = await Purchases.purchasePackage(pkg);
+    return { ok: true, info: customerInfo, productIdentifier, transactionId: transaction?.transactionIdentifier };
   } catch (e) {
     const err = e as { userCancelled?: boolean | null; message?: string };
     return { ok: false, cancelled: Boolean(err.userCancelled), message: err.message };

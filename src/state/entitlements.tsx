@@ -137,6 +137,9 @@ export function EntitlementsProvider({ children }: { children: ReactNode }) {
       if (isPro(result.info)) return 'unlocked';
       if (plan.kind === 'kit') {
         const fresh = claimKitTransactions(result.info).filter((t) => !used.has(t));
+        // The store confirmed the purchase; if its transaction hasn't reached CustomerInfo yet, use the id
+        // from the purchase result so a paid Kit is never refused.
+        if (!fresh.length) fresh.push(result.transactionId ?? `${result.productIdentifier}-${Date.now()}`);
         return assign(forFlight, fresh) ? 'unlocked' : 'error';
       }
       return 'error';
